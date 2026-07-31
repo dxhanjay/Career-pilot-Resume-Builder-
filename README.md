@@ -14,7 +14,7 @@ improved.
 
 | | |
 |---|---|
-| **Phase** | 2 of 22 — Product Planning |
+| **Phase** | 3 of 22 — Requirement Engineering |
 | **State** | 📝 Awaiting approval |
 | **Code** | None yet — by design. Design phases precede implementation. |
 
@@ -38,10 +38,11 @@ structure · technology choices with alternatives · implementation strategy · 
 |---|---|
 | [docs/phase-01-problem-definition.md](docs/phase-01-problem-definition.md) | Problem, personas, competitors, USP, metrics, scope, non-goals, roadmap, risks |
 | [docs/product/phase-02-product-planning.md](docs/product/phase-02-product-planning.md) | Feature catalogue, MVP boundary, release slices, tiering, pricing, credits, event taxonomy |
+| [docs/requirements/phase-03-requirement-engineering.md](docs/requirements/phase-03-requirement-engineering.md) | 95 functional + 62 non-functional requirements, SLOs, compliance, accessibility, traceability |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Record log — every significant decision and its reasoning |
 
-Directories for later phases (`docs/requirements/`, `docs/architecture/`, `docs/ai/`,
-`docs/ops/`, `docs/security/`) are created as those phases are approved.
+Directories for later phases (`docs/architecture/`, `docs/ai/`, `docs/ops/`,
+`docs/security/`) are created as those phases are approved.
 
 ---
 
@@ -50,8 +51,8 @@ Directories for later phases (`docs/requirements/`, `docs/architecture/`, `docs/
 | # | Phase | Status |
 |---|---|---|
 | 1 | Problem Definition | ✅ Approved |
-| 2 | Product Planning | 📝 Awaiting approval |
-| 3 | Requirement Engineering | ⬜ |
+| 2 | Product Planning | ✅ Approved |
+| 3 | Requirement Engineering | 📝 Awaiting approval |
 | 4 | System Architecture | ⬜ |
 | 5 | Technology Stack | ⬜ |
 | 6 | Database Design | ⬜ |

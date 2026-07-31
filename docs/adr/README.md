@@ -36,6 +36,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0006](0006-mvp-scope-boundary.md) | MVP is a text-only golden path in six vertical slices | Accepted | 2 |
 | [0007](0007-credit-ledger-model.md) | Meter AI usage with an append-only credit ledger | Accepted | 2 |
 | [0008](0008-job-search-pass-pricing.md) | Sell a 90-day Job Search Pass, not a monthly subscription | Accepted | 2 |
+| [0009](0009-availability-slo-and-error-budget.md) | Target 99.5% availability with an explicit error budget | Accepted | 3 |
+| [0010](0010-async-first-processing.md) | All AI work is asynchronous; the API never blocks on a model call | Accepted | 3 |
+| [0011](0011-accessibility-and-text-parity.md) | WCAG 2.2 AA enforced in CI, and text mode is permanent | Accepted | 3 |
+| [0012](0012-no-training-on-user-data.md) | No training on user content without explicit opt-in | Accepted | 3 |
+| [0013](0013-i18n-ready-l10n-deferred.md) | i18n-ready now, l10n deferred, rubric parameterised by locale | Accepted | 3 |
 
 ## Template
 
