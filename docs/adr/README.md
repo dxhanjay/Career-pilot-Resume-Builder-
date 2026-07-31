@@ -32,6 +32,10 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0002](0002-candidate-side-only-scope.md) | Build candidate-side only; no employer screening | Accepted | 1 |
 | [0003](0003-no-facial-emotion-analysis.md) | Do not build facial-expression / emotion analysis | Proposed | 1 |
 | [0004](0004-no-fabricated-experience.md) | The system never fabricates user experience | Accepted | 1 |
+| [0005](0005-default-product-assumptions.md) | Adopt explicit defaults for unanswered scoping questions | Accepted (provisional) | 2 |
+| [0006](0006-mvp-scope-boundary.md) | MVP is a text-only golden path in six vertical slices | Accepted | 2 |
+| [0007](0007-credit-ledger-model.md) | Meter AI usage with an append-only credit ledger | Accepted | 2 |
+| [0008](0008-job-search-pass-pricing.md) | Sell a 90-day Job Search Pass, not a monthly subscription | Accepted | 2 |
 
 ## Template
 

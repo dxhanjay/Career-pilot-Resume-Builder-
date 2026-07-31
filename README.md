@@ -14,7 +14,7 @@ improved.
 
 | | |
 |---|---|
-| **Phase** | 1 of 22 — Problem Definition |
+| **Phase** | 2 of 22 — Product Planning |
 | **State** | 📝 Awaiting approval |
 | **Code** | None yet — by design. Design phases precede implementation. |
 
@@ -37,10 +37,11 @@ structure · technology choices with alternatives · implementation strategy · 
 | Document | Contents |
 |---|---|
 | [docs/phase-01-problem-definition.md](docs/phase-01-problem-definition.md) | Problem, personas, competitors, USP, metrics, scope, non-goals, roadmap, risks |
+| [docs/product/phase-02-product-planning.md](docs/product/phase-02-product-planning.md) | Feature catalogue, MVP boundary, release slices, tiering, pricing, credits, event taxonomy |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Record log — every significant decision and its reasoning |
 
-Directories for later phases (`docs/product/`, `docs/requirements/`, `docs/architecture/`,
-`docs/ai/`, `docs/ops/`, `docs/security/`) are created as those phases are approved.
+Directories for later phases (`docs/requirements/`, `docs/architecture/`, `docs/ai/`,
+`docs/ops/`, `docs/security/`) are created as those phases are approved.
 
 ---
 
@@ -48,8 +49,8 @@ Directories for later phases (`docs/product/`, `docs/requirements/`, `docs/archi
 
 | # | Phase | Status |
 |---|---|---|
-| 1 | Problem Definition | 📝 Awaiting approval |
-| 2 | Product Planning | ⬜ |
+| 1 | Problem Definition | ✅ Approved |
+| 2 | Product Planning | 📝 Awaiting approval |
 | 3 | Requirement Engineering | ⬜ |
 | 4 | System Architecture | ⬜ |
 | 5 | Technology Stack | ⬜ |
@@ -73,9 +74,25 @@ Directories for later phases (`docs/product/`, `docs/requirements/`, `docs/archi
 
 ---
 
+## What we're building (MVP)
+
+One complete journey, text-only, shipped in six vertical slices:
+
+```
+Sign up → upload resume → ⭐ "here's what the machine saw" → ATS score with evidence
+        → paste a job description → match + skill gaps → grounded suggestions
+        → mock interview targeting your gaps → report → fix → re-upload → watch the score move
+```
+
+Free gives the full diagnosis. Paid gives the transformation and the volume
+(₹1,299 / $25 for a 90-day Job Search Pass). See
+[Phase 2](docs/product/phase-02-product-planning.md).
+
+---
+
 ## Standing commitments
 
-Four decisions already constrain everything that follows:
+Eight decisions constrain everything that follows — the first four are load-bearing:
 
 1. **[ADR-0001](docs/adr/0001-record-architecture-decisions.md)** — every significant
    decision is recorded, with its rejected alternatives.
