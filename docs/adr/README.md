@@ -41,6 +41,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0011](0011-accessibility-and-text-parity.md) | WCAG 2.2 AA enforced in CI, and text mode is permanent | Accepted | 3 |
 | [0012](0012-no-training-on-user-data.md) | No training on user content without explicit opt-in | Accepted | 3 |
 | [0013](0013-i18n-ready-l10n-deferred.md) | i18n-ready now, l10n deferred, rubric parameterised by locale | Accepted | 3 |
+| [0014](0014-modular-monolith-with-enforced-boundaries.md) | Modular monolith with machine-enforced boundaries + worker tier | Accepted | 4 |
+| [0015](0015-ai-provider-port-and-guard-stage.md) | All model access through one port; all output passes a guard | Accepted | 4 |
+| [0016](0016-transactional-outbox.md) | Publish domain events via a transactional outbox | Accepted | 4 |
+| [0017](0017-cookie-sessions-with-rotating-refresh.md) | httpOnly cookie sessions with rotating refresh + family revocation | Accepted | 4 |
+| [0018](0018-rejected-architectural-patterns.md) | Patterns deliberately not adopted, and what would reopen them | Accepted | 4 |
 
 ## Template
 
