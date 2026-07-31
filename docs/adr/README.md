@@ -51,6 +51,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0021](0021-redis-broker-postgres-truth.md) | Redis as broker, because PostgreSQL already holds job truth | Accepted | 5 |
 | [0022](0022-managed-paas-then-aws.md) | Managed PaaS (Render) for MVP; AWS ap-south-1 as a triggered migration | Accepted | 5 |
 | [0023](0023-permissive-licences-only.md) | Permissive licences only, enforced in CI | Accepted | 5 |
+| [0024](0024-schema-per-module-no-cross-schema-fks.md) | One schema per module; no foreign keys across schemas | Accepted | 6 |
+| [0025](0025-uuidv7-primary-keys.md) | UUIDv7 primary keys, generated in the application | Accepted | 6 |
+| [0026](0026-user-id-on-every-pii-table.md) | Every PII table carries `user_id`, even when derivable | Accepted | 6 |
+| [0027](0027-jsonb-usage-policy.md) | JSONB only for versioned, whole-read structures | Accepted | 6 |
+| [0028](0028-hash-chained-audit-log.md) | The audit log is hash-chained and verified nightly | Accepted | 6 |
 
 ## Template
 

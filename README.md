@@ -14,7 +14,7 @@ improved.
 
 | | |
 |---|---|
-| **Phase** | 5 of 22 — Technology Stack |
+| **Phase** | 6 of 22 — Database Design |
 | **State** | 📝 Awaiting approval |
 | **Code** | None yet — by design. Design phases precede implementation. |
 
@@ -41,6 +41,7 @@ structure · technology choices with alternatives · implementation strategy · 
 | [docs/requirements/phase-03-requirement-engineering.md](docs/requirements/phase-03-requirement-engineering.md) | 95 functional + 62 non-functional requirements, SLOs, compliance, accessibility, traceability |
 | [docs/architecture/phase-04-system-architecture.md](docs/architecture/phase-04-system-architecture.md) | C4 diagrams, module boundaries, job engine, outbox, auth, AI pipeline, deployment, folder structure |
 | [docs/architecture/phase-05-technology-stack.md](docs/architecture/phase-05-technology-stack.md) | Stack selection with weighted criteria, licence audit, cost model, CI gate mapping |
+| [docs/architecture/phase-06-database-design.md](docs/architecture/phase-06-database-design.md) | 38 tables across 9 schemas, erasure architecture, ledger design, indexes, ER diagrams, retention |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Record log — every significant decision and its reasoning |
 
 Directories for later phases (`docs/ai/`, `docs/ops/`, `docs/security/`) are created as
@@ -56,8 +57,8 @@ those phases are approved.
 | 2 | Product Planning | ✅ Approved |
 | 3 | Requirement Engineering | ✅ Approved |
 | 4 | System Architecture | ✅ Approved |
-| 5 | Technology Stack | 📝 Awaiting approval |
-| 6 | Database Design | ⬜ |
+| 5 | Technology Stack | ✅ Approved |
+| 6 | Database Design | 📝 Awaiting approval |
 | 7 | AI System Design | ⬜ |
 | 8 | Dataset Strategy | ⬜ |
 | 9 | AI/ML Pipeline | ⬜ |
