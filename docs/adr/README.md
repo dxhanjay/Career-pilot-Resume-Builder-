@@ -46,6 +46,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0016](0016-transactional-outbox.md) | Publish domain events via a transactional outbox | Accepted | 4 |
 | [0017](0017-cookie-sessions-with-rotating-refresh.md) | httpOnly cookie sessions with rotating refresh + family revocation | Accepted | 4 |
 | [0018](0018-rejected-architectural-patterns.md) | Patterns deliberately not adopted, and what would reopen them | Accepted | 4 |
+| [0019](0019-python-fastapi-backend-nextjs-frontend.md) | Python + FastAPI backend; TypeScript + Next.js frontend | Accepted | 5 |
+| [0020](0020-postgresql-single-datastore.md) | PostgreSQL as the single datastore, including vectors and documents | Accepted | 5 |
+| [0021](0021-redis-broker-postgres-truth.md) | Redis as broker, because PostgreSQL already holds job truth | Accepted | 5 |
+| [0022](0022-managed-paas-then-aws.md) | Managed PaaS (Render) for MVP; AWS ap-south-1 as a triggered migration | Accepted | 5 |
+| [0023](0023-permissive-licences-only.md) | Permissive licences only, enforced in CI | Accepted | 5 |
 
 ## Template
 
