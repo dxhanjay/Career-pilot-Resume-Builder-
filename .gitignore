@@ -1,0 +1,60 @@
+# ---- Secrets: never commit these ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+credentials.json
+service-account*.json
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Editors / IDEs ----
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+.idea/
+*.swp
+*~
+
+# ---- Logs & temp ----
+*.log
+logs/
+tmp/
+.cache/
+
+# ---- Node (stack TBD in Phase 5) ----
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.tsbuildinfo
+
+# ---- Python (stack TBD in Phase 5) ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ---- Data: user resumes are PII and must never enter the repo ----
+data/raw/
+data/uploads/
+*.pdf
+*.docx
+!docs/**/*.pdf
+
+# ---- Infra state ----
+*.tfstate
+*.tfstate.*
+.terraform/
