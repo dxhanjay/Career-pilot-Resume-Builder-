@@ -61,6 +61,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0031](0031-requirement-level-hybrid-matching.md) | Match at requirement level with hybrid retrieval | Accepted | 7 |
 | [0032](0032-guard-novel-entity-diff.md) | The guard detects fabrication by entity diff against source and JD | Accepted | 7 |
 | [0033](0033-interview-blueprint-then-slot-generation.md) | Deterministic interview blueprint, then per-slot generation | Accepted | 7 |
+| [0034](0034-synthetic-first-no-scraped-resumes.md) | Synthetic-first corpus; no scraped or unverified resume datasets | Accepted | 8 |
+| [0035](0035-generator-emits-ground-truth.md) | Generate structured truth first, then render — labels come free | Accepted | 8 |
+| [0036](0036-real-resumes-never-in-repo.md) | Real resumes never enter the repository or CI | Accepted | 8 |
+| [0037](0037-git-lfs-not-dvc.md) | Version the corpus with Git LFS, not DVC | Accepted | 8 |
+| [0038](0038-dataset-version-recorded-with-every-eval.md) | Every eval result records its dataset version | Accepted | 8 |
 
 ## Template
 
