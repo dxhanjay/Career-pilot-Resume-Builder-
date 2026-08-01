@@ -71,6 +71,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0041](0041-no-rag-in-core-loop.md) | No RAG in the core loop; retrieval ≠ RAG | Accepted | 9 |
 | [0042](0042-pinned-manifest-as-registry.md) | A pinned YAML manifest in Git is the model registry | Accepted | 9 |
 | [0043](0043-defer-learned-section-classifier.md) | Defer the learned section classifier until rules are measured | Accepted | 9 |
+| [0044](0044-model-selection-criteria.md) | Eliminate models on contractual criteria before evaluating quality | Accepted | 10 |
+| [0045](0045-two-tier-model-routing.md) | Two model tiers — small for categorical, medium for guarded generation | Accepted | 10 |
+| [0046](0046-prompt-caching-stable-prefix.md) | Design prompts as a stable cacheable prefix plus volatile suffix | Accepted | 10 |
+| [0047](0047-reject-layoutlm-non-commercial.md) | Reject LayoutLM; layout understanding stays geometric | Accepted | 10 |
+| [0048](0048-defer-asr-selection-to-h2.md) | Defer ASR selection to Horizon 2, with criteria recorded | Accepted | 10 |
 
 ## Template
 
