@@ -76,6 +76,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0046](0046-prompt-caching-stable-prefix.md) | Design prompts as a stable cacheable prefix plus volatile suffix | Accepted | 10 |
 | [0047](0047-reject-layoutlm-non-commercial.md) | Reject LayoutLM; layout understanding stays geometric | Accepted | 10 |
 | [0048](0048-defer-asr-selection-to-h2.md) | Defer ASR selection to Horizon 2, with criteria recorded | Accepted | 10 |
+| [0049](0049-confidence-bands-not-decimals.md) | Report confidence as bands with reasons, not decimals | Accepted | 11 |
+| [0050](0050-rubric-is-the-explanation.md) | The rubric is the explanation; reject SHAP/LIME | Accepted | 11 |
+| [0051](0051-per-finding-provenance-labelling.md) | Label every finding with how it was produced | Accepted | 11 |
+| [0052](0052-fairness-as-invariance.md) | Define fairness as invariance; state what we don't measure | Accepted | 11 |
+| [0053](0053-publish-the-rubric.md) | Publish the scoring rubric | Accepted | 11 |
 
 ## Template
 
