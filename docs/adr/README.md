@@ -56,6 +56,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0026](0026-user-id-on-every-pii-table.md) | Every PII table carries `user_id`, even when derivable | Accepted | 6 |
 | [0027](0027-jsonb-usage-policy.md) | JSONB only for versioned, whole-read structures | Accepted | 6 |
 | [0028](0028-hash-chained-audit-log.md) | The audit log is hash-chained and verified nightly | Accepted | 6 |
+| [0029](0029-deterministic-cascade-llm-last.md) | Deterministic methods first; the LLM handles only the tail | Accepted | 7 |
+| [0030](0030-llm-emits-judgements-not-scores.md) | The LLM emits categorical judgements with spans, never scores | Accepted | 7 |
+| [0031](0031-requirement-level-hybrid-matching.md) | Match at requirement level with hybrid retrieval | Accepted | 7 |
+| [0032](0032-guard-novel-entity-diff.md) | The guard detects fabrication by entity diff against source and JD | Accepted | 7 |
+| [0033](0033-interview-blueprint-then-slot-generation.md) | Deterministic interview blueprint, then per-slot generation | Accepted | 7 |
 
 ## Template
 

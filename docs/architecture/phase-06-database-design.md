@@ -750,7 +750,8 @@ to forget than adding a branch to a purge script.
 | Resume files (R2) + `resumes` | `last_accessed_at` | 12 months |
 | `parsed_documents` + children | `created_at` | 12 months |
 | `analyses`, `matches` | `created_at` | 12 months |
-| **Free-tier history** | `created_at` | **30 days** (FR-DASH-006) |
+| **Free-tier files + extracted text** | `created_at` | **30 days** (FR-DASH-006, revised) |
+| **Free-tier scores + score history** | — | **Retained** — tiny rows, and they are the retention hook |
 | Interview sessions/reports | `created_at` | 12 months |
 | `ledger_entries`, `payments` | `created_at` | **7 years** (financial) |
 | `audit_log`, `content_access_log` | `created_at` | 12 months |

@@ -231,7 +231,7 @@ That's where ambiguity costs money. Elsewhere, the requirement statement *is* th
 | FR-DASH-003 | The system MUST show the score delta between resume versions | F-55 | S5 |
 | FR-DASH-004 | The system MUST show interview session history and weakest areas | F-56 | S5 |
 | FR-DASH-005 | The system MUST display remaining allowance in outcome language ("3 analyses left"), not raw credit units | F-58 | S5 |
-| FR-DASH-006 | Free-tier history MUST be limited to 30 days | — | S5 |
+| FR-DASH-006 | Free-tier **files and extracted text** MUST be purged after 30 days; **scores and score history MUST be retained** *(revised in Phase 6 — purging score history would delete the progress feature that drives retention, at no storage saving)* | — | S5 |
 
 ### 5.9 Credits & Entitlements — `FR-CRED`
 
