@@ -66,6 +66,11 @@ future-you) can tell the difference between a deliberate constraint and an accid
 | [0036](0036-real-resumes-never-in-repo.md) | Real resumes never enter the repository or CI | Accepted | 8 |
 | [0037](0037-git-lfs-not-dvc.md) | Version the corpus with Git LFS, not DVC | Accepted | 8 |
 | [0038](0038-dataset-version-recorded-with-every-eval.md) | Every eval result records its dataset version | Accepted | 8 |
+| [0039](0039-no-finetuning-at-mvp.md) | No fine-tuning at MVP; three reopening conditions | Accepted | 9 |
+| [0040](0040-frozen-holdout-and-k-fold-calibration.md) | Frozen holdout at release gates only; k-fold calibration on dev | Accepted | 9 |
+| [0041](0041-no-rag-in-core-loop.md) | No RAG in the core loop; retrieval ≠ RAG | Accepted | 9 |
+| [0042](0042-pinned-manifest-as-registry.md) | A pinned YAML manifest in Git is the model registry | Accepted | 9 |
+| [0043](0043-defer-learned-section-classifier.md) | Defer the learned section classifier until rules are measured | Accepted | 9 |
 
 ## Template
 

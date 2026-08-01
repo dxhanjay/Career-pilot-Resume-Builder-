@@ -14,7 +14,7 @@ improved.
 
 | | |
 |---|---|
-| **Phase** | 8 of 22 — Dataset Strategy |
+| **Phase** | 9 of 22 — AI/ML Pipeline |
 | **State** | 📝 Awaiting approval |
 | **Code** | None yet — by design. Design phases precede implementation. |
 
@@ -44,6 +44,7 @@ structure · technology choices with alternatives · implementation strategy · 
 | [docs/architecture/phase-06-database-design.md](docs/architecture/phase-06-database-design.md) | 38 tables across 9 schemas, erasure architecture, ledger design, indexes, ER diagrams, retention |
 | [docs/ai/phase-07-ai-system-design.md](docs/ai/phase-07-ai-system-design.md) | Parsing pipeline, ATS rubric, hybrid matching, the guard algorithm, interview blueprint |
 | [docs/ai/phase-08-dataset-strategy.md](docs/ai/phase-08-dataset-strategy.md) | 12 datasets, synthetic generation architecture, adversarial layout suite, annotation, versioning, governance |
+| [docs/ai/phase-09-ai-ml-pipeline.md](docs/ai/phase-09-ai-ml-pipeline.md) | Eval harness, tiered execution, holdout discipline, calibration, prompt engineering, artefact registry |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Record log — every significant decision and its reasoning |
 
 Directories for later phases (`docs/ops/`, `docs/security/`) are created as those phases are
@@ -62,8 +63,8 @@ approved.
 | 5 | Technology Stack | ✅ Approved |
 | 6 | Database Design | ✅ Approved |
 | 7 | AI System Design | ✅ Approved |
-| 8 | Dataset Strategy | 📝 Awaiting approval |
-| 9 | AI/ML Pipeline | ⬜ |
+| 8 | Dataset Strategy | ✅ Approved |
+| 9 | AI/ML Pipeline | 📝 Awaiting approval |
 | 10 | Model Comparison | ⬜ |
 | 11 | Explainable AI | ⬜ |
 | 12 | Backend Architecture | ⬜ |
