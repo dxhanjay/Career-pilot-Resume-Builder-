@@ -38,6 +38,8 @@
         <jacoco.version>0.8.12</jacoco.version>
         <jjwt.version>0.12.6</jjwt.version>
         <cloudinary.version>2.3.0</cloudinary.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
+        <tika.version>3.3.1</tika.version>
 
         <!-- NFR-TEST-01: the build fails below this line coverage on the service layer. -->
         <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
@@ -191,6 +193,55 @@
             <groupId>com.cloudinary</groupId>
             <artifactId>cloudinary-http5</artifactId>
             <version>${cloudinary.version}</version>
+        </dependency>
+
+        <!-- ============================================================
+             DOCUMENT PARSING  (Phase 6)
+             ============================================================ -->
+
+        <!--
+            PDFBox - the primary text extractor.
+
+            Used directly rather than only through Tika because PDF is the format
+            that matters most here and PDFBox exposes control Tika's generic
+            facade hides: per-page extraction, reading-order heuristics, and the
+            ability to detect that a PDF has no text layer at all (a scan), which
+            is the single most common real-world parse failure and needs a
+            specific message rather than an empty result.
+        -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!--
+            Tika - the fallback extractor, and the only path for .docx.
+
+            Deliberately the targeted modules rather than
+            tika-parsers-standard-package. That aggregate pulls parsers for
+            around a thousand formats and roughly 80 MB of transitive
+            dependencies, for a product that accepts exactly two. Every one of
+            those parsers is also attack surface reachable from an uploaded file.
+
+            tika-parser-pdf-module brings its own PDFBox; the explicit
+            declaration above wins by Maven's nearest-definition rule, so there
+            is one PDFBox on the classpath rather than two.
+        -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parser-pdf-module</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parser-microsoft-module</artifactId>
+            <version>${tika.version}</version>
         </dependency>
 
         <!-- ============================================================

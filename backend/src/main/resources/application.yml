@@ -245,6 +245,20 @@ app:
     api-secret: ${CLOUDINARY_API_SECRET:}
     folder: ${CLOUDINARY_FOLDER:careerpilot}
 
+  jobs:
+    # How often to look for queued work. fixedDelay, so a slow batch cannot
+    # cause overlapping runs.
+    poll-interval-ms: ${APP_JOBS_POLL_INTERVAL_MS:5000}
+    reaper-interval-ms: ${APP_JOBS_REAPER_INTERVAL_MS:60000}
+    # Claimed jobs run sequentially on the poller thread, so a large batch means
+    # the last job waits for all the others. Concurrency comes from the executor
+    # and from replicas, not from batch size.
+    batch-size: ${APP_JOBS_BATCH_SIZE:3}
+    # Must comfortably exceed the slowest plausible job, or the reaper requeues
+    # work that is still running and it executes twice.
+    stale-lock-timeout: ${APP_JOBS_STALE_LOCK_TIMEOUT:5m}
+    retention-days: ${APP_JOBS_RETENTION_DAYS:90}
+
   resume:
     # FR-RES-01. Also enforced by spring.servlet.multipart.max-file-size above
     # (the container rejects before any application code runs) and by a CHECK

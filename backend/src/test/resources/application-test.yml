@@ -77,6 +77,17 @@ app:
     max-resumes-per-user: 10
     purge-after-days: 30
 
+  jobs:
+    # Effectively disabled in tests. The poller running on its own schedule
+    # during an integration test would claim the job under test and race the
+    # assertions - a classic source of flakes that only appear in CI. Tests
+    # invoke the handler directly instead.
+    poll-interval-ms: 3600000
+    reaper-interval-ms: 3600000
+    batch-size: 3
+    stale-lock-timeout: 5m
+    retention-days: 90
+
 logging:
   level:
     root: WARN
