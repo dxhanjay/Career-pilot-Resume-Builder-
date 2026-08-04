@@ -111,6 +111,26 @@ spring:
     # graceful shutdown achieves nothing.
     timeout-per-shutdown-phase: 25s
 
+  mail:
+    # Provider-agnostic SMTP. Any of Gmail, Resend, Brevo, SendGrid, Mailgun, or
+    # SES works by changing these values alone.
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:false}
+          # Bound every stage of the SMTP conversation. Without these, a
+          # provider that accepts a connection and then stalls holds a pool
+          # thread until the OS gives up, which can be minutes.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 server:
   # Railway injects PORT at runtime. Binding to a hardcoded 8080 means the
   # platform health check hits a port nothing is listening on, the container is
@@ -178,6 +198,33 @@ app:
     core-pool-size: ${APP_ASYNC_CORE_POOL_SIZE:2}
     max-pool-size: ${APP_ASYNC_MAX_POOL_SIZE:4}
     queue-capacity: ${APP_ASYNC_QUEUE_CAPACITY:50}
+
+  jwt:
+    # No default. A missing JWT_SECRET must stop the application, not fall back
+    # to something predictable: a known signing key lets anyone mint a token
+    # claiming ROLE_ADMIN. JwtProperties additionally rejects anything under
+    # 32 characters at startup.
+    secret: ${JWT_SECRET}
+    # NFR-SEC-03. Short by design: the access token is the credential that
+    # cannot be revoked, so its lifetime IS the revocation delay.
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
+    refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:7d}
+    issuer: careerpilot-ai
+
+  auth:
+    # See AuthProperties: enforcing verification protects deliverability and
+    # blocks throwaway signups, at the cost of activation. Config, not code.
+    require-email-verification: ${AUTH_REQUIRE_EMAIL_VERIFICATION:true}
+    max-failed-login-attempts: ${AUTH_MAX_FAILED_LOGIN_ATTEMPTS:5}
+    lockout-duration: ${AUTH_LOCKOUT_DURATION:15m}
+    verification-token-ttl: ${AUTH_VERIFICATION_TOKEN_TTL:24h}
+    # Much shorter than verification: this token grants account takeover.
+    password-reset-token-ttl: ${AUTH_PASSWORD_RESET_TOKEN_TTL:1h}
+    # Used to build links in outbound email.
+    frontend-base-url: ${APP_FRONTEND_BASE_URL:http://localhost:5173}
+
+  mail:
+    from: ${MAIL_FROM:no-reply@careerpilot.ai}
 
 logging:
   level:

@@ -36,6 +36,7 @@
         <springdoc.version>2.8.6</springdoc.version>
         <archunit.version>1.4.1</archunit.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <jjwt.version>0.12.6</jjwt.version>
 
         <!-- NFR-TEST-01: the build fails below this line coverage on the service layer. -->
         <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
@@ -107,6 +108,66 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- ============================================================
+             SECURITY  (Phase 3)
+             ============================================================ -->
+
+        <!--
+            Spring Security. Adding this starter changes the application's
+            default posture: every endpoint becomes authenticated unless
+            SecurityConfig says otherwise. That default is correct and is why
+            this dependency was deliberately NOT added in Phase 2 — a scaffold
+            phase would have had to configure security purely to switch it off,
+            and this phase would then have rewritten that configuration.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!--
+            Transactional email for verification and password reset.
+
+            Provider-agnostic by design: this is plain SMTP via JavaMailSender,
+            configured through spring.mail.* environment variables. Gmail,
+            Resend, Brevo, SendGrid, and Mailgun are all reachable this way, so
+            choosing a provider is a deployment decision rather than a code
+            change. The application depends on the EmailSender port, not on any
+            of them.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!--
+            JJWT — JSON Web Token creation and verification.
+
+            Split across three artifacts on purpose. Only jjwt-api is on the
+            compile classpath; the implementation and the Jackson serialiser are
+            runtime-only. This means application code physically cannot call
+            into JJWT internals, so a future library upgrade that reshuffles
+            them cannot break our code — only JwtTokenProvider sits against the
+            stable API surface.
+        -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- ============================================================
@@ -210,6 +271,29 @@
             <scope>test</scope>
         </dependency>
 
+        <!--
+            Spring Security test support: @WithMockUser and the MockMvc
+            security post-processors. Without it, every secured-endpoint test
+            has to hand-assemble a SecurityContext.
+        -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            Mockito arrives transitively via spring-boot-starter-test, but is
+            declared explicitly so that ${org.mockito:mockito-core:jar} resolves
+            in the surefire argLine above. A transitive dependency cannot be
+            referenced that way.
+        -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -241,6 +325,29 @@
                 every save, while `mvn verify` runs the full suite. A single
                 suite that takes four minutes is a suite developers stop running.
             -->
+            <!--
+                Populates ${groupId:artifactId:type} properties with the local
+                repository path of each dependency.
+
+                Required for the Mockito java agent below: without this
+                execution, ${org.mockito:mockito-core:jar} is not a known
+                property and is passed to the JVM verbatim, which fails the fork
+                with "Error occurred during initialization of VM" - an error that
+                names neither Mockito nor the property.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resolve-dependency-paths</id>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -248,6 +355,22 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
+                    <!--
+                        Attach Mockito as an explicit java agent.
+
+                        Mockito's inline mock maker needs to instrument loaded
+                        classes. Without this it self-attaches at runtime and
+                        prints a warning that recent JDKs will refuse to allow -
+                        so the suite currently works and will simply stop working
+                        on a future JDK. Declaring the agent now is the fix, and
+                        it costs nothing.
+
+                        @{argLine} is late replacement: it preserves whatever
+                        JaCoCo put in argLine during prepare-agent. Writing a
+                        plain <argLine> here would silently overwrite it and
+                        coverage would drop to zero with no error.
+                    -->
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
                 </configuration>
             </plugin>
 

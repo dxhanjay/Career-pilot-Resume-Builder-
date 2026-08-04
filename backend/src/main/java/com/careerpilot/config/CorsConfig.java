@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -33,16 +33,19 @@ import java.util.List;
  * coexist with configured origins, and it accommodates Vercel's per-deployment
  * preview subdomains where an exact list cannot be maintained by hand.
  *
- * <p><em>Credentials enabled.</em> Phase 3 will place the refresh token in an
- * {@code httpOnly} cookie where the deployment topology allows it, and a cookie
- * does not cross origins without this. Enabling it now avoids a confusing
- * change of behaviour mid-authentication-work.
+ * <p><em>Credentials enabled.</em> Phase 11 may place the refresh token in an
+ * {@code httpOnly} cookie, and a cookie does not cross origins without this.
+ * Enabling it now avoids a confusing change of behaviour mid-frontend-work.
  *
- * <p>Registered as a {@link CorsFilter} bean rather than via
- * {@code WebMvcConfigurer}, because a filter runs ahead of Spring Security's
- * chain. Configured the other way, a pre-flight {@code OPTIONS} request is
- * rejected by security before CORS headers are ever added — the single most
- * common cause of "CORS works until I add authentication".
+ * <p><strong>Exposed as a {@link CorsConfigurationSource}, not a
+ * {@code CorsFilter}.</strong> Phase 2 registered a standalone filter, which was
+ * correct while there was no security chain. Now that Spring Security is
+ * present, it must own CORS: its chain runs ahead of ordinary filters, so a
+ * pre-flight {@code OPTIONS} request would be rejected by security <em>before</em>
+ * a standalone CORS filter could add the headers. Registering the source instead
+ * lets {@code SecurityConfig} apply it inside the chain, at the right point.
+ * Two independent CORS mechanisms would also emit duplicate
+ * {@code Access-Control-Allow-Origin} headers, which browsers reject.
  *
  * @author CareerPilot AI
  * @since 0.1.0
@@ -69,12 +72,12 @@ public class CorsConfig {
     }
 
     /**
-     * Builds the CORS filter from configured origins.
+     * Builds the CORS policy applied by the security chain.
      *
-     * @return a filter applying the CORS policy to every path
+     * @return the configuration source consumed by {@code SecurityConfig}
      */
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
@@ -97,6 +100,6 @@ public class CorsConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         log.info("CORS configured for origins: {}", corsProperties.allowedOrigins());
-        return new CorsFilter(source);
+        return source;
     }
 }

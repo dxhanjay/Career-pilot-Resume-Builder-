@@ -22,6 +22,14 @@ spring:
     # Each run starts from an empty container, so there is nothing to baseline.
     baseline-on-migrate: false
 
+  mail:
+    # Points at a port with nothing listening. Deliberate: mail sending is
+    # @Async and swallows MailException, so tests exercise the real failure path
+    # (send attempted, delivery fails, application continues) without needing a
+    # mail server. A test that depended on SMTP would be slow and flaky.
+    host: localhost
+    port: 3025
+
 app:
   cors:
     allowed-origins: http://localhost:5173
@@ -29,6 +37,29 @@ app:
     core-pool-size: 1
     max-pool-size: 2
     queue-capacity: 10
+
+  jwt:
+    # Fixed test secret. Over 32 characters so JwtProperties' validation passes.
+    # This value is worthless outside the test suite and is never used to sign
+    # anything a real client will see.
+    secret: test-only-signing-secret-that-is-long-enough-for-hs256
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+    issuer: careerpilot-ai
+
+  auth:
+    # Off by default in tests so that integration tests can log in immediately
+    # after registering. The enforced path has its own dedicated test that
+    # overrides this property.
+    require-email-verification: false
+    max-failed-login-attempts: 5
+    lockout-duration: 15m
+    verification-token-ttl: 24h
+    password-reset-token-ttl: 1h
+    frontend-base-url: http://localhost:5173
+
+  mail:
+    from: no-reply@test.local
 
 logging:
   level:

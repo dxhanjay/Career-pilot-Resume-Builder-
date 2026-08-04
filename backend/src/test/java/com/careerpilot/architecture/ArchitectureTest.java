@@ -335,16 +335,33 @@ class ArchitectureTest {
      * design specifies {@code TIMESTAMPTZ} throughout; the Java side must be
      * {@code java.time} throughout to match, or the boundary between them
      * becomes a source of daylight-saving bugs that only appear twice a year.
+     *
+     * <p><strong>{@code JwtTokenProvider} is exempt, deliberately.</strong> JJWT's
+     * builder accepts only {@code java.util.Date} for the {@code iat} and
+     * {@code exp} claims — there is no {@code Instant} overload in 0.12.x. This
+     * rule found that on its first run against real code, which is the rule
+     * working rather than failing.
+     *
+     * <p>The exemption is scoped to one class by name rather than granted to a
+     * package or removed entirely, because that is precisely where a legacy type
+     * belongs: at the adapter that speaks a third-party library's language, and
+     * nowhere else. {@code JwtTokenProvider} converts from {@link java.time.Instant}
+     * at the boundary and no {@code Date} escapes it. A blanket exemption would
+     * let the type spread back into the domain, which is the outcome this rule
+     * exists to prevent.
      */
     @Test
-    @DisplayName("no legacy java.util date API")
+    @DisplayName("no legacy java.util date API outside the JWT library boundary")
     void no_legacy_date_api() {
         noClasses()
+                .that().doNotHaveSimpleName("JwtTokenProvider")
                 .should().dependOnClassesThat()
                 .haveNameMatching("java\\.util\\.(Date|Calendar)")
                 .because("""
                         Use java.time. The legacy types are mutable and carry no zone, which \
-                        does not survive contact with TIMESTAMPTZ columns.""")
+                        does not survive contact with TIMESTAMPTZ columns. JwtTokenProvider is \
+                        exempt because the JJWT builder has no Instant overload; it converts at \
+                        the boundary and lets no Date escape.""")
                 .check(classes);
     }
 
