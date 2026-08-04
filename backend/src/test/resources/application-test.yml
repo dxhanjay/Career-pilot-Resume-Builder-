@@ -61,6 +61,22 @@ app:
   mail:
     from: no-reply@test.local
 
+  storage:
+    # The reason the FileStorage port exists. With only a Cloudinary adapter,
+    # every upload test would need an account and an API key in CI - so they
+    # would not exist, and the upload path would be the least-tested code in the
+    # application while handling the least-trusted input.
+    provider: local
+    # Blank means java.io.tmpdir, which the OS clears. Tests must not accumulate
+    # files in the working tree.
+    local-directory: ""
+    signed-url-ttl-seconds: 300
+
+  resume:
+    max-file-size-bytes: 5242880
+    max-resumes-per-user: 10
+    purge-after-days: 30
+
 logging:
   level:
     root: WARN

@@ -14,6 +14,17 @@ spring:
       hibernate:
         format_sql: false
 
+app:
+  storage:
+    # Not overridable by environment in production, deliberately.
+    #
+    # Local storage on Railway would appear to work and then lose every uploaded
+    # resume on the next redeploy, because container filesystems are ephemeral.
+    # With more than one replica, a file written by one container is invisible to
+    # the others. Hardcoding this means a missing APP_STORAGE_PROVIDER variable
+    # cannot silently degrade production into that state.
+    provider: cloudinary
+
 # ---------------------------------------------------------------------------
 # API documentation is OFF in production.
 #

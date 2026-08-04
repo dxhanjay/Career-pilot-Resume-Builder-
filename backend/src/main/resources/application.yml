@@ -226,6 +226,36 @@ app:
   mail:
     from: ${MAIL_FROM:no-reply@careerpilot.ai}
 
+  storage:
+    # 'local' or 'cloudinary'. Local writes to disk and is development-only:
+    # Railway filesystems are ephemeral, so every redeploy would silently delete
+    # every uploaded resume. application-prod.yml overrides this to cloudinary.
+    provider: ${APP_STORAGE_PROVIDER:local}
+    local-directory: ${APP_STORAGE_LOCAL_DIR:}
+    # Short by design. A signed URL is a bearer credential for one file, and
+    # URLs leak through history, referrers, and screenshots.
+    signed-url-ttl-seconds: ${APP_STORAGE_SIGNED_URL_TTL:300}
+
+  cloudinary:
+    # Unset locally. CloudinaryConfig is only instantiated when the storage
+    # provider is cloudinary, and it fails fast with a clear message if these
+    # are missing at that point.
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+    folder: ${CLOUDINARY_FOLDER:careerpilot}
+
+  resume:
+    # FR-RES-01. Also enforced by spring.servlet.multipart.max-file-size above
+    # (the container rejects before any application code runs) and by a CHECK
+    # constraint on the column.
+    max-file-size-bytes: ${APP_RESUME_MAX_FILE_SIZE:5242880}
+    # A cost control as much as a product limit: every resume is a candidate for
+    # parsing and AI analysis, both of which cost money.
+    max-resumes-per-user: ${APP_RESUME_MAX_PER_USER:10}
+    # NFR-PRIV-01 requires removal within 30 days.
+    purge-after-days: ${APP_RESUME_PURGE_AFTER_DAYS:30}
+
 logging:
   level:
     root: INFO

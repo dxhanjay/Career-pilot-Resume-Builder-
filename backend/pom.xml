@@ -37,6 +37,7 @@
         <archunit.version>1.4.1</archunit.version>
         <jacoco.version>0.8.12</jacoco.version>
         <jjwt.version>0.12.6</jjwt.version>
+        <cloudinary.version>2.3.0</cloudinary.version>
 
         <!-- NFR-TEST-01: the build fails below this line coverage on the service layer. -->
         <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
@@ -168,6 +169,28 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- ============================================================
+             FILE STORAGE  (Phase 5)
+             ============================================================ -->
+
+        <!--
+            Cloudinary Java SDK.
+
+            Only CloudinaryFileStorage imports it; everything else depends on the
+            FileStorage port. That is what allows LocalFileStorage to exist, and
+            therefore what allows the upload path to have integration tests at
+            all - no account, no API key, no network.
+
+            The -http5 variant uses Apache HttpClient 5, matching what Spring
+            Boot 3 already pulls in. The -http44 variant would drag in HttpClient
+            4.4 alongside it, giving two HTTP client stacks in one image.
+        -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http5</artifactId>
+            <version>${cloudinary.version}</version>
         </dependency>
 
         <!-- ============================================================
