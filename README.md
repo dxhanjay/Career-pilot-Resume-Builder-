@@ -1,12 +1,10 @@
-# AI Resume Analyzer & Mock Interview Platform
+# CareerPilot AI
 
-A production-ready SaaS platform that helps job seekers understand why their resume gets
-rejected, rehearse for the interview a specific job will actually give them, and prove they
-improved.
+An AI-powered career assistant that helps students understand why their resume gets rejected,
+rehearse for the interview a specific job will actually give them, and prove they improved.
 
-> **One-line problem statement:** Job seekers are rejected before a human ever reads their
-> resume, and rejected again in interviews for reasons no one ever tells them — because the
-> feedback loop in hiring is broken in both directions.
+> **The problem:** A student applies to 200 internships, hears nothing from 190, gets rejected by 9,
+> and is told why by exactly 0.
 
 ---
 
@@ -14,100 +12,99 @@ improved.
 
 | | |
 |---|---|
-| **Phase** | 11 of 22 — Explainable AI |
+| **Phase** | 1 of 14 — Project Planning |
 | **State** | 📝 Awaiting approval |
-| **Code** | None yet — by design. Design phases precede implementation. |
+| **Code** | None yet — by design. Planning precedes implementation. |
 
 ---
 
 ## How this project runs
 
-Development follows a 22-phase Agile + Production Engineering methodology. Each phase is
-designed, explained, and approved before the next begins. No phase is skipped, and no code
-is written for a phase that has not been approved.
-
-Each phase documents: objective · why it matters · deliverables · architecture · folder
-structure · technology choices with alternatives · implementation strategy · best practices
-· security · scalability · risks · production-readiness checklist.
+Each phase is designed, explained, and approved before the next begins. No phase is skipped, and no
+code is written for a phase that has not been approved. Every requirement carries an ID (`FR-*`,
+`NFR-*`); every later artefact — a table, an endpoint, a test — traces back to one.
 
 ---
 
-## Navigation
+## Phase 1 documents
 
 | Document | Contents |
 |---|---|
-| [docs/phase-01-problem-definition.md](docs/phase-01-problem-definition.md) | Problem, personas, competitors, USP, metrics, scope, non-goals, roadmap, risks |
-| [docs/product/phase-02-product-planning.md](docs/product/phase-02-product-planning.md) | Feature catalogue, MVP boundary, release slices, tiering, pricing, credits, event taxonomy |
-| [docs/requirements/phase-03-requirement-engineering.md](docs/requirements/phase-03-requirement-engineering.md) | 95 functional + 62 non-functional requirements, SLOs, compliance, accessibility, traceability |
-| [docs/architecture/phase-04-system-architecture.md](docs/architecture/phase-04-system-architecture.md) | C4 diagrams, module boundaries, job engine, outbox, auth, AI pipeline, deployment, folder structure |
-| [docs/architecture/phase-05-technology-stack.md](docs/architecture/phase-05-technology-stack.md) | Stack selection with weighted criteria, licence audit, cost model, CI gate mapping |
-| [docs/architecture/phase-06-database-design.md](docs/architecture/phase-06-database-design.md) | 38 tables across 9 schemas, erasure architecture, ledger design, indexes, ER diagrams, retention |
-| [docs/ai/phase-07-ai-system-design.md](docs/ai/phase-07-ai-system-design.md) | Parsing pipeline, ATS rubric, hybrid matching, the guard algorithm, interview blueprint |
-| [docs/ai/phase-08-dataset-strategy.md](docs/ai/phase-08-dataset-strategy.md) | 12 datasets, synthetic generation architecture, adversarial layout suite, annotation, versioning, governance |
-| [docs/ai/phase-09-ai-ml-pipeline.md](docs/ai/phase-09-ai-ml-pipeline.md) | Eval harness, tiered execution, holdout discipline, calibration, prompt engineering, artefact registry |
-| [docs/ai/phase-10-model-comparison.md](docs/ai/phase-10-model-comparison.md) | Elimination criteria, provider comparison, licence findings, cost model, prompt caching, bake-off protocol |
-| [docs/ai/phase-11-explainable-ai.md](docs/ai/phase-11-explainable-ai.md) | Explanation ladder, confidence design, provenance labelling, bias detection, fairness definition, ethics, transparency |
-| [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Record log — every significant decision and its reasoning |
+| [01 — PRD](docs/phase-01-planning/01-prd.md) | Problem, personas, competitors, 40 functional + 19 non-functional requirements, non-goals, metrics, risks, roadmap |
+| [02 — Folder Structure](docs/phase-01-planning/02-folder-structure.md) | Monorepo layout, Clean Architecture packages, ArchUnit enforcement rules, naming conventions |
+| [03 — Database Design](docs/phase-01-planning/03-database-design.md) | 24 tables with columns, constraints, indexes, retention policy, and the reasoning for each choice |
+| [04 — ER Diagrams](docs/phase-01-planning/04-er-diagram.md) | The same schema as Mermaid ER diagrams across five domain clusters |
+| [05 — API Specification](docs/phase-01-planning/05-api-list.md) | 80 endpoints with auth, DTOs, status codes, and response contracts |
+| [06 — User Flows](docs/phase-01-planning/06-user-flows.md) | Eight critical journeys as sequence diagrams, including the failure paths |
+| [07 — Architecture](docs/phase-01-planning/07-architecture.md) | C4 diagrams, layering rules, async job engine, AI pipeline, security model, known limitations |
 
-Directories for later phases (`docs/ops/`, `docs/security/`) are created as those phases are
-approved.
+Earlier design work for a superseded Python/Next.js iteration is preserved under
+[docs/archive-v1/](docs/archive-v1/README.md).
 
 ---
 
-## Phase progress
+## Tech stack
 
-| # | Phase | Status |
-|---|---|---|
-| 1 | Problem Definition | ✅ Approved |
-| 2 | Product Planning | ✅ Approved |
-| 3 | Requirement Engineering | ✅ Approved |
-| 4 | System Architecture | ✅ Approved |
-| 5 | Technology Stack | ✅ Approved |
-| 6 | Database Design | ✅ Approved |
-| 7 | AI System Design | ✅ Approved |
-| 8 | Dataset Strategy | ✅ Approved |
-| 9 | AI/ML Pipeline | ✅ Approved |
-| 10 | Model Comparison | ✅ Approved |
-| 11 | Explainable AI | 📝 Awaiting approval |
-| 12 | Backend Architecture | ⬜ |
-| 13 | Frontend Architecture | ⬜ |
-| 14 | DevOps | ⬜ |
-| 15 | MLOps | ⬜ |
-| 16 | Cloud Deployment | ⬜ |
-| 17 | Security | ⬜ |
-| 18 | Performance Optimization | ⬜ |
-| 19 | Testing | ⬜ |
-| 20 | Monitoring | ⬜ |
-| 21 | Scaling | ⬜ |
-| 22 | Maintenance | ⬜ |
+| Layer | Choice |
+|---|---|
+| Frontend | React · Vite · Tailwind CSS · React Router · Axios · React Hook Form |
+| Backend | Java 21 · Spring Boot 3 · Spring Security · Spring Data JPA · Maven |
+| Database | PostgreSQL 16 (Flyway migrations) |
+| Storage | Cloudinary |
+| AI | Claude API |
+| Parsing | Apache PDFBox · Apache Tika |
+| Deployment | Railway (backend) · Vercel (frontend) |
+| Docs | Swagger / OpenAPI |
+| Testing | JUnit 5 · Mockito · Testcontainers · Postman |
 
 ---
 
-## What we're building (MVP)
+## What we're building
 
-One complete journey, text-only, shipped in six vertical slices:
+One complete loop, not a feature grid:
 
 ```
-Sign up → upload resume → ⭐ "here's what the machine saw" → ATS score with evidence
-        → paste a job description → match + skill gaps → grounded suggestions
-        → mock interview targeting your gaps → report → fix → re-upload → watch the score move
+Sign up → upload resume → ⭐ "here's exactly what the machine saw" → ATS score with evidence
+        → paste a job description → match % + ranked skill gaps → grounded rewrite suggestions
+        → mock interview targeting your remaining gaps → report → fix → re-upload → watch the score move
 ```
 
-Free gives the full diagnosis. Paid gives the transformation and the volume
-(₹1,299 / $25 for a 90-day Job Search Pass). See
-[Phase 2](docs/product/phase-02-product-planning.md).
+The starred step is the one that makes the product credible. Every competitor gives a score; almost
+none show the parse. Showing a student that their two-column layout made their entire work history
+invisible to a screener is the moment the tool stops being another opinion.
 
 ---
 
 ## Standing commitments
 
-Eight decisions constrain everything that follows — the first four are load-bearing:
+Four decisions constrain everything that follows:
 
-1. **[ADR-0001](docs/adr/0001-record-architecture-decisions.md)** — every significant
-   decision is recorded, with its rejected alternatives.
-2. **[ADR-0002](docs/adr/0002-candidate-side-only-scope.md)** — candidate-side only. We
-   never screen, rank, or reject real applicants on an employer's behalf.
-3. **[ADR-0003](docs/adr/0003-no-facial-emotion-analysis.md)** — no facial-expression or
-   emotion inference. Delivery feedback comes from audio and transcript signals only.
-4. **[ADR-0004](docs/adr/0004-no-fabricated-experience.md)** — the system improves how the
-   truth is expressed. It never invents experience the user does not have.
+1. **Candidate-side only.** We never screen, rank, score, or reject real applicants on an employer's
+   behalf. The person whose resume is analysed always owns it. *(PRD §7.1)*
+2. **Never fabricate experience.** The system improves how the truth is expressed. Every AI rewrite
+   is diffed against its source, and invented entities are flagged before the user sees them.
+   *(PRD §7.2)*
+3. **No facial or emotion analysis.** Interview feedback comes from answer content only. *(PRD §7.3)*
+4. **Every finding carries evidence.** A score without a quote from the resume it came from is an
+   assertion, not analysis. *(FR-ATS-03)*
+
+---
+
+## Roadmap
+
+| # | Phase | Status |
+|---|---|---|
+| 1 | Project Planning | 📝 Awaiting approval |
+| 2 | Backend Setup | ⬜ |
+| 3 | Authentication | ⬜ |
+| 4 | Deploy Backend | ⬜ |
+| 5 | Resume Upload | ⬜ |
+| 6 | Resume Parsing | ⬜ |
+| 7 | ATS Analyzer | ⬜ |
+| 8 | Resume Builder | ⬜ |
+| 9 | Job Description Matching | ⬜ |
+| 10 | AI Mock Interview | ⬜ |
+| 11 | Frontend Foundation | ⬜ |
+| 12 | Frontend Features | ⬜ |
+| 13 | Admin Dashboard | ⬜ |
+| 14 | Hardening | ⬜ |
