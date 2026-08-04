@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# Production profile
+#
+# Everything here is a deliberate reduction in visibility to an external
+# observer, and an increase in visibility to us through logs. Nothing in this
+# file has a default value: a missing environment variable must fail at startup
+# rather than silently fall back to a development setting.
+# ---------------------------------------------------------------------------
+
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+# ---------------------------------------------------------------------------
+# API documentation is OFF in production.
+#
+# A live OpenAPI document is a complete, machine-readable inventory of every
+# endpoint, every parameter, every validation rule, and every error condition in
+# the system. That is enormously convenient for a developer and equally
+# convenient for anyone probing the service. The committed Postman collection
+# serves the people who should have it.
+# ---------------------------------------------------------------------------
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Health and info only. The platform needs health; everything else is
+        # attack surface. Metrics is exposed to authenticated admins in Phase 13,
+        # behind the security chain rather than here.
+        include: health,info
+  endpoint:
+    health:
+      # Never reveal which downstream component is failing to an unauthenticated
+      # caller. "Database unreachable" is useful to an operator and equally
+      # useful to someone deciding where to apply pressure.
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    com.careerpilot: INFO
+    # Hibernate logs the full SQL statement on a constraint violation at WARN,
+    # which can include parameter values — and parameter values here are user
+    # PII. Raise to ERROR so only genuine failures are recorded, without the
+    # statement text.
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
+
+  structured:
+    format:
+      # Structured JSON to stdout, collected by the platform. One JSON object
+      # per line, with MDC entries — including correlationId — as fields rather
+      # than embedded in a message string. That is what makes a log searchable
+      # by trace ID instead of grep-able by substring.
+      console: ecs

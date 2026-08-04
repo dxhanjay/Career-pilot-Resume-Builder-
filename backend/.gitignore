@@ -1,0 +1,34 @@
+# Build output
+target/
+
+# The Maven wrapper IS committed — mvnw, mvnw.cmd, and .mvn/wrapper/*.properties.
+# That is the point of it: anyone cloning this repo builds with Maven 3.9.9
+# whether or not they have Maven installed, and CI uses the same version rather
+# than whatever the runner image happens to ship. It is generated with
+# `-Dtype=only-script`, so there is no binary jar in the repository.
+
+# Environment — the single most important line in this file.
+# One committed secret is a credential that must be rotated, and it stays in
+# git history forever even after the file is deleted.
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

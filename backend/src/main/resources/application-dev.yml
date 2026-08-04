@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# Development profile
+#
+# Optimised for feedback speed and visibility. Everything here that would be
+# unsafe in production is overridden in application-prod.yml — check both files
+# before assuming a setting is environment-wide.
+# ---------------------------------------------------------------------------
+
+spring:
+  datasource:
+    # Local defaults so a fresh clone runs against docker-compose without a
+    # .env file. Production has no defaults — a missing variable there should
+    # fail at startup, not silently connect somewhere unintended.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/careerpilot}
+    username: ${SPRING_DATASOURCE_USERNAME:careerpilot}
+    password: ${SPRING_DATASOURCE_PASSWORD:careerpilot}
+
+  jpa:
+    # SQL visible during development. This is how N+1 query problems are noticed
+    # while they are still cheap to fix — the symptom is forty identical SELECTs
+    # scrolling past for one request, which is obvious in a console and invisible
+    # in production metrics until it is a latency incident.
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+logging:
+  level:
+    com.careerpilot: DEBUG
+    # Uncomment when diagnosing a specific query; far too noisy to leave on.
+    # org.hibernate.SQL: DEBUG
+    # org.hibernate.orm.jdbc.bind: TRACE
+    org.flywaydb: INFO
+
+  pattern:
+    # %X{correlationId} pulls the value CorrelationIdFilter placed in the MDC.
+    # Having it on every line locally is what makes the mechanism believable
+    # before it matters in production.
+    console: "%d{HH:mm:ss.SSS} %highlight(%-5level) [%X{correlationId:-no-trace}] %cyan(%logger{36}) - %msg%n"
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    # Endpoints sorted alphabetically rather than by declaration order, which is
+    # otherwise effectively random.
+    operations-sorter: alpha
+    tags-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # More visibility locally. Note /env and /configprops print configuration
+        # values including resolved secrets — which is exactly why they are not
+        # in the shared file and never in production.
+        include: health,info,metrics,env,configprops,beans,mappings
+  endpoint:
+    health:
+      show-details: always

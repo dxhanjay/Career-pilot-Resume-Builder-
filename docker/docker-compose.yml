@@ -1,0 +1,50 @@
+# =============================================================================
+# Local development dependencies.
+#
+# Starts PostgreSQL only. The application itself runs from the IDE or via
+# `mvn spring-boot:run`, because a hot-reload loop beats rebuilding an image on
+# every change.
+#
+#     docker compose -f docker/docker-compose.yml up -d
+#
+# Credentials here are development-only and match the defaults in
+# application-dev.yml. They are committed deliberately — a local throwaway
+# database has no secret worth protecting, and requiring a .env file to run
+# `docker compose up` is friction with no security benefit.
+# =============================================================================
+
+services:
+  postgres:
+    # Pinned to the same minor version as production and as the Testcontainers
+    # image in AbstractIntegrationTest. Three environments on three different
+    # PostgreSQL versions is how a query works locally, passes CI, and fails in
+    # production.
+    image: postgres:16-alpine
+    container_name: careerpilot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: careerpilot
+      POSTGRES_USER: careerpilot
+      POSTGRES_PASSWORD: careerpilot
+      # Fail fast on a bad password locally rather than falling back to trust
+      # auth, which would hide a misconfigured connection string until the
+      # first environment that does check credentials.
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - "5432:5432"
+    volumes:
+      - careerpilot_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Without this, `depends_on` reports the container as ready the moment the
+      # process starts — which is several seconds before PostgreSQL accepts
+      # connections. The application then fails its first connection attempt and
+      # exits.
+      test: ["CMD-SHELL", "pg_isready -U careerpilot -d careerpilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  careerpilot_pgdata:
+    driver: local

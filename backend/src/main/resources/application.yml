@@ -1,0 +1,185 @@
+# ---------------------------------------------------------------------------
+# CareerPilot AI — shared configuration
+#
+# This file is committed. It therefore contains NO secrets. Every sensitive or
+# environment-specific value is an ${ENV_VAR} reference, and the contract for
+# what those variables are lives in .env.example.
+#
+# Profile-specific overrides: application-dev.yml, application-prod.yml
+# ---------------------------------------------------------------------------
+
+spring:
+  application:
+    name: careerpilot-api
+    version: 0.1.0
+
+  profiles:
+    # Defaults to dev so that a fresh clone runs without ceremony. Production
+    # sets SPRING_PROFILES_ACTIVE=prod explicitly — an environment that forgets
+    # to should fail loudly rather than quietly running with dev settings.
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  datasource:
+    # NOTE: this must be a JDBC URL (jdbc:postgresql://...), not the libpq URL
+    # that Railway's DATABASE_URL provides. See .env.example for how to build it
+    # from Railway's PG* reference variables.
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      # Keep the pool well below the database's max_connections. A container
+      # that claims every available connection leaves nothing for migrations, a
+      # psql session, or the second instance that exists briefly during a
+      # rolling deploy.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+
+      # Fail fast when the pool is exhausted rather than piling up threads that
+      # each wait 30 seconds. A request that cannot get a connection in 20s is
+      # not going to succeed usefully.
+      connection-timeout: 20000
+      idle-timeout: 300000
+
+      # Must be shorter than any idle-connection timeout imposed by the database
+      # or an intermediate proxy. A connection the pool believes is alive and
+      # the far end has already closed produces intermittent, unreproducible
+      # "connection reset" errors.
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      # 'validate', never 'update' — in every environment including local.
+      #
+      # 'update' lets Hibernate silently alter the production schema based on
+      # entity annotations. It cannot drop columns, cannot rename safely, has no
+      # review step, and no rollback. Flyway owns the schema; Hibernate's only
+      # job here is to verify at startup that the entities and the schema agree.
+      # A mismatch then fails on boot, where it is obvious, rather than on the
+      # first query that touches the missing column.
+      ddl-auto: validate
+
+    # Disabled deliberately.
+    #
+    # open-in-view keeps a Hibernate session open for the whole request,
+    # including view rendering. It makes LazyInitializationException disappear —
+    # by silently issuing extra queries from the serialisation layer, which is
+    # how N+1 problems become invisible until production. With it off, a lazy
+    # access outside a transaction fails immediately and loudly, at the point
+    # the fetch strategy is actually wrong.
+    open-in-view: false
+
+    properties:
+      hibernate:
+        jdbc:
+          # Matches the TIMESTAMPTZ decision in the database design.
+          time_zone: UTC
+          # Batch inserts/updates; meaningful once parsed-entity rows are
+          # written in bulk in Phase 6.
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Fails the startup if a previously-applied migration file has been edited.
+    # Editing an applied migration is how two environments silently diverge.
+    validate-on-migrate: true
+    # Allows Flyway to adopt an existing non-empty database on first run.
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  servlet:
+    multipart:
+      # FR-RES-01: 5 MB per file. Enforced by the container before any
+      # application code runs, so it cannot be forgotten in a controller.
+      max-file-size: 5MB
+      # Slightly larger to accommodate multipart overhead and form fields.
+      max-request-size: 6MB
+
+  jackson:
+    # Serialise Instant as ISO-8601 rather than an epoch number.
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+  lifecycle:
+    # Upper bound on graceful shutdown. Must be comfortably below the platform's
+    # own SIGKILL grace period, or the process is killed mid-drain and the
+    # graceful shutdown achieves nothing.
+    timeout-per-shutdown-phase: 25s
+
+server:
+  # Railway injects PORT at runtime. Binding to a hardcoded 8080 means the
+  # platform health check hits a port nothing is listening on, the container is
+  # marked unhealthy, and it restarts forever with no useful error message.
+  port: ${PORT:8080}
+
+  # NFR-SEC-05: never return a stack trace or internal message to a client.
+  # GlobalExceptionHandler produces the response; these settings ensure that
+  # anything reaching Spring's own error handling is equally uninformative.
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+
+  # Finish in-flight requests before the process exits. On a Railway redeploy
+  # this is the difference between a user's upload completing and it failing
+  # with a connection reset.
+  shutdown: graceful
+
+  # Railway terminates TLS at its edge and forwards over HTTP. Without this the
+  # application believes every request is plaintext, and any generated absolute
+  # URL comes out as http:// — which a browser on an https:// page will refuse
+  # as mixed content.
+  forward-headers-strategy: framework
+
+  tomcat:
+    # Bound the request line and headers. Defaults are generous, and an
+    # unbounded header is a cheap denial-of-service vector.
+    max-http-form-post-size: 6MB
+    max-swallow-size: 6MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only what is needed. Actuator exposes a great deal by default in some
+        # configurations — /env and /configprops in particular will happily
+        # print configuration values. Metrics is added for ADMIN use in Phase 13.
+        include: health,info
+  endpoint:
+    health:
+      # Enables /actuator/health/liveness and /actuator/health/readiness.
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+# ---------------------------------------------------------------------------
+# Application-specific configuration. Bound to typed @ConfigurationProperties
+# records under com.careerpilot.config.properties, so a typo here fails at
+# startup rather than injecting a null that breaks later.
+# ---------------------------------------------------------------------------
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  async:
+    core-pool-size: ${APP_ASYNC_CORE_POOL_SIZE:2}
+    max-pool-size: ${APP_ASYNC_MAX_POOL_SIZE:4}
+    queue-capacity: ${APP_ASYNC_QUEUE_CAPACITY:50}
+
+logging:
+  level:
+    root: INFO
+    com.careerpilot: INFO

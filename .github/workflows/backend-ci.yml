@@ -1,0 +1,114 @@
+name: Backend CI
+
+# Runs on every push and pull request touching the backend.
+#
+# The path filter keeps a frontend-only change from spending four minutes
+# rebuilding Java, and vice versa. In a monorepo without filters, CI time
+# doubles for no benefit and people start ignoring it.
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+# Cancel a running job when a newer commit is pushed to the same branch. Without
+# this, three quick pushes queue three full builds and the first two are already
+# irrelevant.
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+
+    # Testcontainers needs a Docker daemon. GitHub's ubuntu runners provide one,
+    # which is why the integration tests can run here unchanged.
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          # Caches ~/.m2 keyed on pom.xml. Turns a ~90s dependency download into
+          # a few seconds on every run after the first.
+          cache: 'maven'
+
+      # `verify` runs Surefire (unit tests), then Failsafe (integration tests
+      # against a Testcontainers PostgreSQL), then JaCoCo. One command covers
+      # the whole gate.
+      #
+      # -B batch mode: no ANSI progress spam in the log.
+      # -ntp: suppress the transfer-progress lines, which are thousands of
+      #       useless entries when the cache misses.
+      - name: Build and test
+        working-directory: backend
+        run: ./mvnw -B -ntp clean verify
+
+      # Uploaded even on failure — a failed run is exactly when the reports are
+      # needed, and re-running locally to see them wastes the CI run entirely.
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+          retention-days: 7
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage
+          path: backend/target/site/jacoco/
+          retention-days: 7
+
+  # Dependency vulnerability scanning.
+  #
+  # Split into its own job because the OWASP NVD data feed is slow and
+  # occasionally unavailable, and a third-party outage must not block a
+  # legitimate merge. continue-on-error surfaces findings without gating.
+  #
+  # Phase 14 hardens this: pinned NVD API key, a severity threshold that does
+  # fail the build, and a scheduled full scan.
+  dependency-scan:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run OWASP Dependency-Check
+        working-directory: backend
+        run: >
+          ./mvnw -B -ntp org.owasp:dependency-check-maven:check
+          -DfailBuildOnCVSS=7
+          -DskipTests
+
+      - name: Upload dependency-check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: backend/target/dependency-check-report.html
+          retention-days: 30

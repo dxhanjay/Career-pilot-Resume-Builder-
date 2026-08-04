@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Test profile
+#
+# Datasource properties are deliberately absent: @ServiceConnection on the
+# Testcontainers PostgreSQL container supplies the URL, username, and password
+# at runtime. Declaring them here as well would either be ignored or, worse,
+# override the container and point the suite at something else.
+# ---------------------------------------------------------------------------
+
+spring:
+  jpa:
+    hibernate:
+      # Same as every other environment. Flyway owns the schema in tests too —
+      # letting Hibernate generate it here would mean the migrations are never
+      # exercised, which is precisely the failure this suite should catch.
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    # Each run starts from an empty container, so there is nothing to baseline.
+    baseline-on-migrate: false
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+  async:
+    core-pool-size: 1
+    max-pool-size: 2
+    queue-capacity: 10
+
+logging:
+  level:
+    root: WARN
+    com.careerpilot: INFO
+    # Testcontainers is chatty at INFO — image pulls, port mappings, wait
+    # strategies — and drowns the output that matters when a test fails.
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN
+    org.flywaydb: INFO
