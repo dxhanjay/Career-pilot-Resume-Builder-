@@ -1,0 +1,502 @@
+{
+  "info": {
+    "_postman_id": "b4f1c2a0-7d3e-4a91-9c58-3e6d2f1a8b04",
+    "name": "CareerPilot AI",
+    "description": "Authentication API for CareerPilot AI (Phase 3).\n\n## Setup\n\n1. Import an environment: `CareerPilot-Local` or `CareerPilot-Railway`.\n2. Set `baseUrl` in that environment.\n3. Run **Register** then **Login**.\n\nTokens are captured automatically. `Login` and `Refresh` write `accessToken` and `refreshToken` into the environment, and every protected request reads `{{accessToken}}` from collection-level auth — so nothing needs to be pasted by hand.\n\n## Running the whole folder\n\nThe requests are ordered so that Collection Runner executes them as a coherent scenario. **Register → Login → Me → Refresh → Replay** ends by deliberately triggering reuse detection, which revokes the token family. That is intentional: the last two requests prove the security mechanism works. Re-run **Register** to start a fresh scenario.\n\nEach request carries assertions, so the Runner reports pass/fail rather than requiring you to read response bodies.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// A fresh address per run, so the collection can be executed",
+          "// repeatedly against the same environment without colliding on the",
+          "// unique email index.",
+          "if (!pm.environment.get('runEmail')) {",
+          "    pm.environment.set('runEmail', 'postman-' + Date.now() + '@example.com');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "password", "value": "a-long-enough-password", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/health", "host": ["{{baseUrl}}"], "path": ["actuator", "health"] },
+            "description": "Liveness. Must not depend on any third party — a health check that fails because a mail provider is slow gets the container killed for no reason."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('status is UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Readiness check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/actuator/health/readiness", "host": ["{{baseUrl}}"], "path": ["actuator", "health", "readiness"] },
+            "description": "Readiness includes database connectivity. This is the path Railway polls; a failure here means the container is killed and restarted."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "1. Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{runEmail}}\",\n  \"password\": \"{{password}}\",\n  \"fullName\": \"Postman User\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] },
+            "description": "Creates an account in PENDING status and dispatches a verification email.\n\nPassword must be 12–72 characters. The upper bound is a BCrypt constraint, not a policy choice: BCrypt hashes at most 72 bytes and silently ignores the rest, so a longer passphrase would be weaker than the user believes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('envelope reports success', () => pm.expect(body.success).to.be.true);",
+                  "pm.test('ROLE_USER granted', () => pm.expect(body.data.roles).to.include('ROLE_USER'));",
+                  "",
+                  "// NFR-SEC-05 checked on the wire. A field added to the User entity in",
+                  "// a later phase cannot start leaking without failing here.",
+                  "pm.test('no internal fields leak', () => {",
+                  "    const raw = pm.response.text();",
+                  "    ['passwordHash', 'failedLoginAttempts', 'aiCreditsUsedMonth', 'lockedUntil']",
+                  "        .forEach(f => pm.expect(raw).to.not.include(f));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Register (duplicate) → 409",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{runEmail}}\",\n  \"password\": \"{{password}}\",\n  \"fullName\": \"Postman User\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] },
+            "description": "Registration is the one endpoint that DOES reveal whether an address is taken — the user must be told why their signup failed. Password reset deliberately does the opposite."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('stable error code', () => pm.expect(pm.response.json().data.code).to.eql('CONFLICT'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{runEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] },
+            "description": "Returns a short-lived access token and a single-use refresh token.\n\nThe test script saves both into the environment, so no manual copying is needed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const data = pm.response.json().data;",
+                  "pm.test('access token issued', () => pm.expect(data.accessToken).to.be.a('string').and.not.empty);",
+                  "pm.test('refresh token issued', () => pm.expect(data.refreshToken).to.be.a('string').and.not.empty);",
+                  "pm.test('token type is Bearer', () => pm.expect(data.tokenType).to.eql('Bearer'));",
+                  "",
+                  "pm.environment.set('accessToken', data.accessToken);",
+                  "pm.environment.set('refreshToken', data.refreshToken);",
+                  "// Kept so the replay request can present a token that has been consumed.",
+                  "pm.environment.set('originalRefreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Login (wrong password) → 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{runEmail}}\",\n  \"password\": \"definitely-the-wrong-password\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] },
+            "description": "Must be indistinguishable from a login for an address that does not exist — same status, same code, same message, and comparable response time. Any difference is a user-enumeration oracle."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.environment.set('wrongPasswordCode', pm.response.json().data.code);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Login (unknown address) → 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nobody-does-not-exist@example.com\",\n  \"password\": \"definitely-the-wrong-password\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('identical to the wrong-password response', () =>",
+                  "    pm.expect(pm.response.json().data.code).to.eql(pm.environment.get('wrongPasswordCode')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Me (authenticated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "me"] },
+            "description": "Reads current state from the database rather than the token's claims. The token is a snapshot up to 15 minutes old; this endpoint exists so a client can ask what is true now."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('returns the signed-in account', () =>",
+                  "    pm.expect(pm.response.json().data.email).to.eql(pm.environment.get('runEmail')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Me (anonymous) → 401",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "me"] },
+            "description": "Proves deny-by-default is in force and that 401 arrives in the standard envelope rather than Spring Security's default empty body."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('uses the standard error envelope', () =>",
+                  "    pm.expect(pm.response.json().data.code).to.eql('UNAUTHORIZED'));",
+                  "pm.test('carries a correlation id (NFR-OBS-01)', () =>",
+                  "    pm.expect(pm.response.headers.get('X-Correlation-Id')).to.not.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8. Refresh (rotates)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] },
+            "description": "Consumes the presented token and issues a successor in the same family. Single use is the precondition for reuse detection: if the old token stayed valid, a replay would be indistinguishable from ordinary use."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const data = pm.response.json().data;",
+                  "pm.test('a DIFFERENT refresh token is issued', () =>",
+                  "    pm.expect(data.refreshToken).to.not.eql(pm.environment.get('originalRefreshToken')));",
+                  "",
+                  "pm.environment.set('accessToken', data.accessToken);",
+                  "pm.environment.set('refreshToken', data.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. ⭐ Replay consumed token → TOKEN_REUSE_DETECTED",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{originalRefreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] },
+            "description": "Presents the token already consumed by request 8. There is no benign explanation for this, so the entire token family is revoked — ending the attacker's session and the victim's together.\n\nRunning this deliberately invalidates the session. That is the point."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('detected as theft, not as an ordinary bad token', () =>",
+                  "    pm.expect(pm.response.json().data.code).to.eql('TOKEN_REUSE_DETECTED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. ⭐ Victim's current token is also dead",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] },
+            "description": "The assertion that matters most in this collection.\n\nThe token presented here was never replayed — it is the legitimate successor from request 8. It must nonetheless be rejected, because the whole family was revoked. Revoking only the replayed token would leave the attacker's rotated successor working and the compromise running indefinitely."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the entire family was revoked, not just the replayed token', () =>",
+                  "    pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Password recovery",
+      "item": [
+        {
+          "name": "Forgot password (unknown address) → 202",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"nobody-does-not-exist@example.com\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "forgot-password"] },
+            "description": "Returns 202 for an address with no account. A 404 here would be a free, unauthenticated user-enumeration API — no password guessing, no rate-limit pressure, just a yes/no answer per address."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('202 Accepted', () => pm.response.to.have.status(202));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot password (registered address) → 202",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{runEmail}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "forgot-password"] },
+            "description": "Identical response to the unknown-address case. That identity is the entire point."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('202 Accepted, same as unknown', () => pm.response.to.have.status(202));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"<paste the token from the emailed link>\",\n  \"newPassword\": \"a-brand-new-long-password\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "reset-password"] },
+            "description": "Requires a token from an emailed link, so it cannot be automated here.\n\nCompleting a reset revokes every existing session. Without that, an attacker holding a stolen refresh token would keep access after the victim reset their password — which is usually the exact reason the victim reset it."
+          }
+        },
+        {
+          "name": "Change password (authenticated)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"a-brand-new-long-password\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "change-password"] },
+            "description": "Requires the current password even though the caller is already authenticated. Without it, anyone with a few minutes at an unlocked laptop could take permanent ownership of the account.\n\nNot part of the ordered run: it changes the password and invalidates the scenario's other requests."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Logout (this session)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "logout"] },
+            "description": "Revokes one refresh token. Silently succeeds for an unknown token: reporting 'that token does not exist' would tell an unauthenticated caller which tokens are real."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout everywhere",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout-all", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "logout-all"] },
+            "description": "Revokes every active refresh token for the authenticated user."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Email verification",
+      "item": [
+        {
+          "name": "Verify email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"<paste the token from the emailed link>\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/verify-email", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "verify-email"] },
+            "description": "Requires a token from an emailed link. Redeeming it promotes the account from PENDING to ACTIVE.\n\nIdempotent: clicking the link twice is not an error, because users do click twice."
+          }
+        },
+        {
+          "name": "Resend verification → 202",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{runEmail}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/resend-verification", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "resend-verification"] },
+            "description": "Always 202, whether or not the address exists or is already verified. Without a password guess involved, this would otherwise be an even cleaner enumeration oracle than login."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('202 Accepted', () => pm.response.to.have.status(202));"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
