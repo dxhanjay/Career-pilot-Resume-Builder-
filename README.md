@@ -12,9 +12,9 @@ rehearse for the interview a specific job will actually give them, and prove the
 
 | | |
 |---|---|
-| **Phase** | 1 of 14 — Project Planning |
-| **State** | 📝 Awaiting approval |
-| **Code** | None yet — by design. Planning precedes implementation. |
+| **Phase** | 6 of 14 — Resume Parsing |
+| **State** | 🔨 In progress — 6a (text extraction) shipped, 6b (section detection) next |
+| **Code** | Backend through Phase 6a. Frontend not started (Phase 11). |
 
 ---
 
@@ -94,12 +94,12 @@ Four decisions constrain everything that follows:
 
 | # | Phase | Status |
 |---|---|---|
-| 1 | Project Planning | 📝 Awaiting approval |
-| 2 | Backend Setup | ⬜ |
-| 3 | Authentication | ⬜ |
-| 4 | Deploy Backend | ⬜ |
-| 5 | Resume Upload | ⬜ |
-| 6 | Resume Parsing | ⬜ |
+| 1 | Project Planning | ✅ Approved |
+| 2 | Backend Setup | ✅ |
+| 3 | Authentication | ✅ |
+| 4 | Deploy Backend | ✅ |
+| 5 | Resume Upload | ✅ |
+| 6 | Resume Parsing | 🔨 6a done · 6b next |
 | 7 | ATS Analyzer | ⬜ |
 | 8 | Resume Builder | ⬜ |
 | 9 | Job Description Matching | ⬜ |

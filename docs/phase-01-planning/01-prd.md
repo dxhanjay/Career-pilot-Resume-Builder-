@@ -3,7 +3,7 @@
 **Project:** CareerPilot AI
 **Version:** 1.0
 **Date:** 2026-08-04
-**Status:** 📝 Awaiting approval
+**Status:** ✅ Approved 2026-08-10 (re-confirmed against the built backend; see §12)
 **Owner:** Project owner + engineering team
 
 ---
@@ -304,12 +304,12 @@ the React application, despite the entire frontend stack being specified.
 
 | # | Phase | Delivers | Status |
 |---|---|---|---|
-| 1 | **Project Planning** | This document set | 📝 Awaiting approval |
-| 2 | Backend Setup | Spring Boot skeleton, Postgres, config, health | ⬜ |
-| 3 | Authentication | User/Role, JWT, refresh rotation, tests | ⬜ |
-| 4 | Deploy Backend | Railway, env vars, live health endpoint | ⬜ |
-| 5 | Resume Upload | Cloudinary, validation, history, delete | ⬜ |
-| 6 | Resume Parsing | PDFBox/Tika, section detection, structured JSON | ⬜ |
+| 1 | **Project Planning** | This document set | ✅ Approved 2026-08-10 |
+| 2 | Backend Setup | Spring Boot skeleton, Postgres, config, health | ✅ |
+| 3 | Authentication | User/Role, JWT, refresh rotation, tests | ✅ *(no mail provider — Q3)* |
+| 4 | Deploy Backend | Railway, env vars, live health endpoint | ✅ |
+| 5 | Resume Upload | Cloudinary, validation, history, delete | ✅ |
+| 6 | Resume Parsing | PDFBox/Tika, section detection, structured JSON | 🔨 6a ✅ · 6b next |
 | 7 | ATS Analyzer | Claude integration, score, evidence, suggestions | ⬜ |
 | 8 | Resume Builder | Templates, preview, PDF export | ⬜ |
 | 9 | JD Matching | Match %, gaps, grounded rewriting | ⬜ |
