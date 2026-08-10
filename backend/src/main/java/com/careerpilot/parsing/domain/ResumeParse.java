@@ -1,5 +1,6 @@
 package com.careerpilot.parsing.domain;
 
+import com.careerpilot.parsing.domain.section.LineModel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -76,6 +77,17 @@ public class ResumeParse {
     @Column(name = "warnings", nullable = false, columnDefinition = "jsonb")
     private List<ParseWarning> warnings = List.of();
 
+    /**
+     * The line-normalisation contract in force when this parse was written.
+     *
+     * <p>Line pointers on the {@code parsed_*} rows hanging off this parse are
+     * only valid against this version. Recorded here rather than on every entity
+     * because it is a property of how this parse's {@code rawText} is split, not
+     * of any individual entity found in it.
+     */
+    @Column(name = "normalisation_version")
+    private Short normalisationVersion;
+
     @Column(name = "duration_ms")
     private Integer durationMs;
 
@@ -121,6 +133,7 @@ public class ResumeParse {
         parse.charCount = extracted.charCount();
         parse.warnings = List.copyOf(warnings);
         parse.durationMs = durationMs;
+        parse.normalisationVersion = (short) LineModel.NORMALISATION_VERSION;
         return parse;
     }
 
@@ -192,6 +205,10 @@ public class ResumeParse {
 
     public List<ParseWarning> getWarnings() {
         return warnings == null ? List.of() : List.copyOf(warnings);
+    }
+
+    public Short getNormalisationVersion() {
+        return normalisationVersion;
     }
 
     public Integer getDurationMs() {
