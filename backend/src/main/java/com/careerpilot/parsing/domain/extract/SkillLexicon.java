@@ -112,25 +112,7 @@ public final class SkillLexicon {
      * @return the index of the match, or {@code -1}
      */
     static int indexOfToken(String haystack, String alias) {
-        int from = 0;
-        while (from <= haystack.length() - alias.length()) {
-            int at = haystack.indexOf(alias, from);
-            if (at < 0) {
-                return -1;
-            }
-            boolean cleanStart = at == 0 || !isWordChar(haystack.charAt(at - 1));
-            int after = at + alias.length();
-            boolean cleanEnd = after == haystack.length() || !isWordChar(haystack.charAt(after));
-            if (cleanStart && cleanEnd) {
-                return at;
-            }
-            from = at + 1;
-        }
-        return -1;
-    }
-
-    private static boolean isWordChar(char c) {
-        return Character.isLetterOrDigit(c);
+        return TextTokens.indexOfToken(haystack, alias);
     }
 
     private static List<Entry> build() {
