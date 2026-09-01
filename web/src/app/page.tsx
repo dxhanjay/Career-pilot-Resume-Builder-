@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Logo } from '@/components/Nav'
-import { Button } from '@/components/ui'
+import { LinkButton } from '@/components/ui'
 
 const STEPS = [
   {
@@ -51,12 +51,12 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo />
           <div className="flex items-center gap-2">
-            <Button as={Link} href="/login" variant="ghost" size="sm">
+            <LinkButton href="/login" variant="ghost" size="sm">
               Sign in
-            </Button>
-            <Button as={Link} href="/register" size="sm">
+            </LinkButton>
+            <LinkButton href="/register" size="sm">
               Get started
-            </Button>
+            </LinkButton>
           </div>
         </div>
       </header>
@@ -77,12 +77,12 @@ export default function LandingPage() {
               words back as the reason for every point lost.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button as={Link} href="/register" size="lg">
+              <LinkButton href="/register" size="lg">
                 Analyse my resume
-              </Button>
-              <Button as={Link} href="/login" variant="secondary" size="lg">
+              </LinkButton>
+              <LinkButton href="/login" variant="secondary" size="lg">
                 I already have an account
-              </Button>
+              </LinkButton>
             </div>
           </div>
         </section>
@@ -137,9 +137,9 @@ export default function LandingPage() {
               Free to start. One upload is enough to find out whether your layout is costing you
               interviews.
             </p>
-            <Button as={Link} href="/register" size="lg" className="mt-8">
+            <LinkButton href="/register" size="lg" className="mt-8">
               Create a free account
-            </Button>
+            </LinkButton>
           </div>
         </section>
       </main>

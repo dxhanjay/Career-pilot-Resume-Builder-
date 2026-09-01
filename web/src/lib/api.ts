@@ -81,6 +81,16 @@ export function handler<T extends unknown[]>(
         )
       }
 
+      // A deployment with no database is a configuration state, not a secret,
+      // and it is the single most likely reason a fresh deploy fails. Saying so
+      // turns "something went wrong" into an instruction; anything else here
+      // stays generic, because the message of an unexpected exception routinely
+      // contains a connection string, a query, or a file path.
+      if (error instanceof Error && error.message.includes('DATABASE_URL')) {
+        console.error('Database is not configured', error)
+        return fail('DATABASE_NOT_CONFIGURED', error.message, 503)
+      }
+
       console.error('Unhandled API error', error)
       return fail('INTERNAL_ERROR', 'Something went wrong on our side.', 500)
     }
