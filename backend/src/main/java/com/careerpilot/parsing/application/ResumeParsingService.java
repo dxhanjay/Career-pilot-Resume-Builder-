@@ -6,9 +6,16 @@ import com.careerpilot.jobs.application.JobService;
 import com.careerpilot.jobs.domain.Job;
 import com.careerpilot.jobs.domain.JobType;
 import com.careerpilot.parsing.application.dto.ParseResultResponse;
+import com.careerpilot.parsing.application.dto.StructuredParseResponse;
 import com.careerpilot.parsing.domain.ExtractedText;
 import com.careerpilot.parsing.domain.ParseWarning;
 import com.careerpilot.parsing.domain.ResumeParse;
+import com.careerpilot.parsing.domain.section.LineModel;
+import com.careerpilot.parsing.domain.section.SectionSegmenter;
+import com.careerpilot.parsing.infrastructure.ParsedContactRepository;
+import com.careerpilot.parsing.infrastructure.ParsedEducationRepository;
+import com.careerpilot.parsing.infrastructure.ParsedExperienceRepository;
+import com.careerpilot.parsing.infrastructure.ParsedSkillRepository;
 import com.careerpilot.parsing.infrastructure.ResumeParseRepository;
 import com.careerpilot.resume.domain.Resume;
 import com.careerpilot.resume.infrastructure.ResumeRepository;
@@ -43,6 +50,11 @@ public class ResumeParsingService {
     private final FileStorage fileStorage;
     private final JobService jobService;
     private final List<TextExtractor> extractors;
+    private final StructuredParseWriter structuredParseWriter;
+    private final ParsedContactRepository contactRepository;
+    private final ParsedSkillRepository skillRepository;
+    private final ParsedEducationRepository educationRepository;
+    private final ParsedExperienceRepository experienceRepository;
 
     /**
      * @param extractors every {@link TextExtractor} Spring found, in
@@ -52,12 +64,22 @@ public class ResumeParsingService {
                                 ResumeParseRepository parseRepository,
                                 FileStorage fileStorage,
                                 JobService jobService,
-                                List<TextExtractor> extractors) {
+                                List<TextExtractor> extractors,
+                                StructuredParseWriter structuredParseWriter,
+                                ParsedContactRepository contactRepository,
+                                ParsedSkillRepository skillRepository,
+                                ParsedEducationRepository educationRepository,
+                                ParsedExperienceRepository experienceRepository) {
         this.resumeRepository = resumeRepository;
         this.parseRepository = parseRepository;
         this.fileStorage = fileStorage;
         this.jobService = jobService;
         this.extractors = extractors;
+        this.structuredParseWriter = structuredParseWriter;
+        this.contactRepository = contactRepository;
+        this.skillRepository = skillRepository;
+        this.educationRepository = educationRepository;
+        this.experienceRepository = experienceRepository;
     }
 
     /**
@@ -159,6 +181,14 @@ public class ResumeParsingService {
 
                 resume.markParsed();
 
+                // Structure extraction runs in the same transaction as the parse
+                // it describes. A parse row whose parsed_* children are missing
+                // looks identical to one whose resume genuinely had no
+                // recognisable sections, and nothing downstream could tell the
+                // difference.
+                structuredParseWriter.write(
+                        parse.getId(), resume.getUserId(), extracted.rawText());
+
                 log.info("Parsed resume {} with {} in {}ms: {} words, {} warning(s)",
                         resumeId, extractor.name(), durationMs,
                         extracted.wordCount(), warnings.size());
@@ -213,6 +243,43 @@ public class ResumeParsingService {
      * @throws ResourceNotFoundException      if nothing has been parsed
      * @throws BusinessRuleViolationException if the latest attempt failed
      */
+    /**
+     * The structured view of the latest successful parse: sections, contact,
+     * skills, education and experience, each carrying the source lines it came
+     * from.
+     *
+     * <p>Sections are recomputed from the stored text rather than persisted.
+     * Segmentation is a pure function of the normalised text and the stored
+     * {@code normalisation_version} pins that contract, so recomputation is
+     * cheaper than a table and can never drift from the line pointers held on
+     * the entity rows.
+     *
+     * @throws BusinessRuleViolationException if the resume has no successful parse
+     */
+    @Transactional(readOnly = true)
+    public StructuredParseResponse getStructured(UUID resumeId, UUID userId) {
+        ResumeParse parse = parseRepository.findLatestSuccessful(resumeId, userId)
+                .orElseThrow(() -> new BusinessRuleViolationException(
+                        "This resume has not been parsed successfully yet"));
+
+        LineModel model = LineModel.of(parse.getRawText());
+
+        return new StructuredParseResponse(
+                parse.getId(),
+                parse.getResumeId(),
+                model.lines().stream().map(line -> line.text()).toList(),
+                SectionSegmenter.segment(model).stream()
+                        .map(StructuredParseResponse.Section::from).toList(),
+                contactRepository.findByParseId(parse.getId())
+                        .map(StructuredParseResponse.Contact::from).orElse(null),
+                skillRepository.findByParseIdOrderByConfidenceDesc(parse.getId()).stream()
+                        .map(StructuredParseResponse.Skill::from).toList(),
+                educationRepository.findByParseIdOrderByEndDateDesc(parse.getId()).stream()
+                        .map(StructuredParseResponse.Education::from).toList(),
+                experienceRepository.findByParseIdOrderByStartDateDesc(parse.getId()).stream()
+                        .map(StructuredParseResponse.Experience::from).toList());
+    }
+
     @Transactional(readOnly = true)
     public ParseResultResponse getRawText(UUID resumeId, UUID userId) {
         ResumeParse parse = parseRepository.findLatestSuccessful(resumeId, userId)

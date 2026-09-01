@@ -15,10 +15,14 @@ import java.util.Locale;
  * what lets terms containing punctuation work without special cases: "b.tech",
  * "c++", "node.js", and "ci/cd" are all searched the same way.
  *
+ * <p>Public because job matching asks the same question of a job posting that
+ * the extractors ask of a resume, and a second implementation of token
+ * boundaries is a second set of "java matched inside javascript" bugs.
+ *
  * @author CareerPilot AI
  * @since 0.1.0
  */
-final class TextTokens {
+public final class TextTokens {
 
     private TextTokens() {
     }
@@ -30,7 +34,7 @@ final class TextTokens {
      * @param term     lowercase term to find
      * @return the index of the match, or {@code -1}
      */
-    static int indexOfToken(String haystack, String term) {
+    public static int indexOfToken(String haystack, String term) {
         if (haystack == null || term == null || term.isEmpty()) {
             return -1;
         }
@@ -56,7 +60,7 @@ final class TextTokens {
      * @param term lowercase term
      * @return {@code true} if the term appears as a whole token
      */
-    static boolean containsToken(String text, String term) {
+    public static boolean containsToken(String text, String term) {
         return text != null && indexOfToken(text.toLowerCase(Locale.ROOT), term) >= 0;
     }
 

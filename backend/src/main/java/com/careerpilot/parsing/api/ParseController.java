@@ -6,6 +6,7 @@ import com.careerpilot.jobs.application.dto.JobStatusResponse;
 import com.careerpilot.jobs.domain.Job;
 import com.careerpilot.parsing.application.ResumeParsingService;
 import com.careerpilot.parsing.application.dto.ParseResultResponse;
+import com.careerpilot.parsing.application.dto.StructuredParseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -95,6 +96,17 @@ public class ParseController {
      * @param principal the authenticated caller
      * @return 200 with the extracted text
      */
+    @GetMapping("/structured")
+    @Operation(summary = "Get the structured parse",
+            description = """
+                    Sections, contact details, skills, education and experience as the parser                     read them, alongside the normalised lines they were read from. Every entity                     carries a source line range so the evidence can be shown next to the claim.                     Returns 409 if the resume has not been parsed successfully.""")
+    public ResponseEntity<ApiResponse<StructuredParseResponse>> getStructured(
+            @PathVariable UUID resumeId,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                parsingService.getStructured(resumeId, principal.getId())));
+    }
+
     @GetMapping("/raw-text")
     @Operation(summary = "Get the extracted text",
             description = """

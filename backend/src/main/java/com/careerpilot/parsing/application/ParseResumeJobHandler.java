@@ -1,5 +1,6 @@
 package com.careerpilot.parsing.application;
 
+import com.careerpilot.ats.application.AtsAnalysisService;
 import com.careerpilot.jobs.application.JobHandler;
 import com.careerpilot.jobs.domain.Job;
 import com.careerpilot.jobs.domain.JobType;
@@ -27,9 +28,12 @@ public class ParseResumeJobHandler implements JobHandler {
     private static final Logger log = LoggerFactory.getLogger(ParseResumeJobHandler.class);
 
     private final ResumeParsingService parsingService;
+    private final AtsAnalysisService atsAnalysisService;
 
-    public ParseResumeJobHandler(ResumeParsingService parsingService) {
+    public ParseResumeJobHandler(ResumeParsingService parsingService,
+                                 AtsAnalysisService atsAnalysisService) {
         this.parsingService = parsingService;
+        this.atsAnalysisService = atsAnalysisService;
     }
 
     @Override
@@ -40,7 +44,16 @@ public class ParseResumeJobHandler implements JobHandler {
     @Override
     public UUID execute(Job job) {
         try {
-            return parsingService.parse(job.getReferenceId());
+            UUID parseId = parsingService.parse(job.getReferenceId());
+
+            // Score it now, while the user is still watching the spinner. The
+            // rubric is pure CPU over text this transaction just committed, so
+            // it costs milliseconds and the report is ready the moment the job
+            // reports success. A failure there is logged and swallowed — the
+            // extracted text is valuable on its own.
+            atsAnalysisService.analyzeQuietly(job.getReferenceId(), job.getUserId());
+
+            return parseId;
 
         } catch (ResumeParsingService.ParseFailedException e) {
             // The service already decided. A document that no extractor can read
