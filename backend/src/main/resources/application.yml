@@ -188,6 +188,25 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+    mail:
+      # Off, deliberately.
+      #
+      # Spring Boot auto-registers a mail health indicator whenever a
+      # JavaMailSender exists, and it opens an SMTP connection to prove the
+      # server is reachable. Ours usually is not: transactional email is
+      # @Async and swallows delivery failures precisely so that a mail outage
+      # cannot take the product down, and no SMTP provider is configured on a
+      # free deployment at all.
+      #
+      # Left on, /actuator/health aggregates that indicator and returns 503.
+      # A platform health check then marks a perfectly working application
+      # unhealthy and refuses to route traffic to it — the application never
+      # goes live, and the log gives no hint why.
+      #
+      # An unreachable mail server degrades one feature. It does not make the
+      # service unhealthy, and the health endpoint should not claim it does.
+      enabled: false
   info:
     env:
       enabled: true

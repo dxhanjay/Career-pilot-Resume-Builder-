@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -45,11 +46,15 @@ class SpaRoutingIT extends AbstractIntegrationTest {
     class ServesTheClient {
 
         @Test
-        @DisplayName("the root returns the shell")
-        void rootReturnsShell() throws Exception {
+        @DisplayName("the root serves the shell")
+        void rootServesTheShell() throws Exception {
+            // Spring Boot's welcome-page mapping answers "/" with a forward to
+            // index.html rather than by writing the file. MockMvc does not
+            // follow forwards, so the body is empty here and the destination is
+            // what there is to assert. A real container completes the forward.
             mockMvc.perform(get("/"))
                     .andExpect(status().isOk())
-                    .andExpect(content().string(containsString("data-spa-shell")));
+                    .andExpect(forwardedUrl("index.html"));
         }
 
         @Test
