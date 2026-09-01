@@ -12,9 +12,18 @@ rehearse for the interview a specific job will actually give them, and prove the
 
 | | |
 |---|---|
-| **Phase** | 6 of 14 — Resume Parsing |
-| **State** | 🔨 In progress — 6a (text extraction) shipped, 6b (section detection) next |
-| **Code** | Backend through Phase 6a. Frontend not started (Phase 11). |
+| **Client** | 🟢 Live — https://careerpilot-seven-tau.vercel.app |
+| **API** | 🟡 Ready to deploy — one Render Blueprint step, see [the deployment guide](docs/phase-04-deployment/02-vercel-render-deployment.md) |
+| **Tests** | 355 unit · 47 integration, against real PostgreSQL with real migrations |
+
+The full loop is implemented: upload a resume, see exactly what a parser read
+from it, get an ATS score where every point lost quotes the line that caused it,
+match against a pasted job description, and rehearse the interview those gaps
+would produce.
+
+No AI provider is configured and none is needed. Scoring, matching, and interview
+evaluation are deterministic rule engines (ADR-0029) — no API key, no per-request
+cost, and the same input always produces the same output.
 
 ---
 
@@ -53,7 +62,7 @@ Earlier design work for a superseded Python/Next.js iteration is preserved under
 | Storage | Cloudinary |
 | AI | Claude API |
 | Parsing | Apache PDFBox · Apache Tika |
-| Deployment | Railway (backend) · Vercel (frontend) |
+| Deployment | Render (API + PostgreSQL) · Vercel (client) — or one Docker image serving both |
 | Docs | Swagger / OpenAPI |
 | Testing | JUnit 5 · Mockito · Testcontainers · Postman |
 
@@ -99,12 +108,12 @@ Four decisions constrain everything that follows:
 | 3 | Authentication | ✅ |
 | 4 | Deploy Backend | ✅ |
 | 5 | Resume Upload | ✅ |
-| 6 | Resume Parsing | 🔨 6a done · 6b next |
-| 7 | ATS Analyzer | ⬜ |
-| 8 | Resume Builder | ⬜ |
-| 9 | Job Description Matching | ⬜ |
-| 10 | AI Mock Interview | ⬜ |
-| 11 | Frontend Foundation | ⬜ |
-| 12 | Frontend Features | ⬜ |
-| 13 | Admin Dashboard | ⬜ |
-| 14 | Hardening | ⬜ |
+| 6 | Resume Parsing | ✅ |
+| 7 | ATS Analyzer | ✅ |
+| 8 | Resume Builder | ◻ Folded into Phase 9 — grounded rewrite suggestions rather than a separate editor |
+| 9 | Job Description Matching | ✅ |
+| 10 | Mock Interview | ✅ |
+| 11 | Frontend Foundation | ✅ |
+| 12 | Frontend Features | ✅ |
+| 13 | Admin Dashboard | ✅ |
+| 14 | Hardening | 🔨 Four startup-blocking defects fixed; see the deployment guide for the free-tier limits that remain |
