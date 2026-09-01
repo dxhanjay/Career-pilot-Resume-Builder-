@@ -1,0 +1,9 @@
+{
+  "name": "CareerPilot AI",
+  "short_name": "CareerPilot",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1c63eb",
+  "icons": []
+}

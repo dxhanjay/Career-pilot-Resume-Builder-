@@ -1,0 +1,27 @@
+# Keeps the build context small and, more importantly, keeps host artefacts out
+# of the image. A stale backend/target or frontend/node_modules copied in from
+# the host is how a build starts passing locally and failing on the platform for
+# reasons nobody can reproduce.
+
+.git
+.github
+.claude
+docs
+postman
+scripts
+docker
+
+**/node_modules
+**/dist
+**/target
+**/.venv
+**/__pycache__
+
+**/.env
+**/.env.*
+!**/.env.example
+
+**/*.log
+**/.DS_Store
+**/.idea
+**/.vscode

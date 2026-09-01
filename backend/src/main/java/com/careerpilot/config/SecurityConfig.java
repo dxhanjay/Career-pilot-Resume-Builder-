@@ -146,6 +146,50 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
 
                         /*
+                         * The single-page application shell and its assets.
+                         *
+                         * The frontend is served from this same process (see
+                         * SpaConfig), so the HTML, JavaScript, and CSS must be
+                         * reachable before anyone has signed in — a login page
+                         * behind authentication is not a login page.
+                         *
+                         * This exposes no data. Every API route below still
+                         * requires a token, and the bundle contains only the
+                         * client the browser was always going to download.
+                         */
+                        .requestMatchers(HttpMethod.GET,
+                                "/",
+                                "/index.html",
+                                "/favicon.ico",
+                                "/manifest.webmanifest",
+                                "/robots.txt",
+                                "/assets/**",
+                                "/static/**").permitAll()
+
+                        /*
+                         * Client-side routes.
+                         *
+                         * A browser reloading on /dashboard asks the server for
+                         * /dashboard. SpaConfig answers with index.html and the
+                         * router takes over; the data behind that page is
+                         * fetched afterwards, over API routes that are still
+                         * authenticated. Enumerated rather than a wildcard so a
+                         * future API path cannot be quietly caught by it.
+                         */
+                        .requestMatchers(HttpMethod.GET,
+                                "/login",
+                                "/register",
+                                "/verify-email",
+                                "/forgot-password",
+                                "/reset-password",
+                                "/dashboard",
+                                "/resumes/**",
+                                "/jobs/**",
+                                "/interviews/**",
+                                "/settings",
+                                "/admin/**").permitAll()
+
+                        /*
                          * Deny by default.
                          *
                          * The most important line in this file. With it, an

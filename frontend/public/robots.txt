@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /$
+Disallow: /dashboard
+Disallow: /resumes
+Disallow: /jobs
+Disallow: /interviews
+Disallow: /settings
+Disallow: /admin
+Disallow: /api
