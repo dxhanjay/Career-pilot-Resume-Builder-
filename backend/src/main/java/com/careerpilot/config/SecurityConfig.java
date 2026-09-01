@@ -126,7 +126,28 @@ public class SecurityConfig {
                                 "/api/v1/auth/verify-email",
                                 "/api/v1/auth/resend-verification",
                                 "/api/v1/auth/forgot-password",
-                                "/api/v1/auth/reset-password").permitAll()
+                                "/api/v1/auth/reset-password",
+
+                                /*
+                                 * Logout takes a refresh token in the body and
+                                 * revokes it. Requiring an access token would
+                                 * mean that a user whose access token has
+                                 * already expired — the single most likely
+                                 * moment for someone to give up and close the
+                                 * tab — cannot revoke their refresh token,
+                                 * which then stays valid for its full seven
+                                 * days.
+                                 *
+                                 * This grants nothing. The caller must already
+                                 * hold the token being revoked, and revoking a
+                                 * credential you possess is not an attack; if
+                                 * anything it is what a victim wants to be able
+                                 * to do quickly. /logout-all stays authenticated,
+                                 * because it ends every session for an account
+                                 * rather than the one the caller can prove they
+                                 * hold.
+                                 */
+                                "/api/v1/auth/logout").permitAll()
 
                         // Liveness and readiness only. The platform polls these
                         // before any credential exists, so they cannot be

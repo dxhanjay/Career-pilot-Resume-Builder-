@@ -16,14 +16,17 @@ spring:
 
 app:
   storage:
-    # Not overridable by environment in production, deliberately.
+    # Defaults to cloudinary, and a missing variable therefore cannot silently
+    # degrade production into ephemeral storage.
     #
-    # Local storage on Railway would appear to work and then lose every uploaded
-    # resume on the next redeploy, because container filesystems are ephemeral.
-    # With more than one replica, a file written by one container is invisible to
-    # the others. Hardcoding this means a missing APP_STORAGE_PROVIDER variable
-    # cannot silently degrade production into that state.
-    provider: cloudinary
+    # It is overridable, because refusing outright would mean a deployment
+    # cannot come up at all until a Cloudinary account exists — which turns a
+    # degraded feature into a dead application. The trade is made explicit
+    # rather than hidden: LocalFileStorage logs a prominent warning at startup
+    # whenever it finds itself running under the prod profile, saying that
+    # uploads will be lost on the next redeploy and naming the variables that
+    # fix it.
+    provider: ${APP_STORAGE_PROVIDER:cloudinary}
 
 # ---------------------------------------------------------------------------
 # API documentation is OFF in production.

@@ -40,6 +40,7 @@
         <cloudinary.version>2.3.0</cloudinary.version>
         <pdfbox.version>3.0.7</pdfbox.version>
         <tika.version>3.3.1</tika.version>
+        <zonky.version>2.0.7</zonky.version>
 
         <!-- NFR-TEST-01: the build fails below this line coverage on the service layer. -->
         <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
@@ -329,6 +330,27 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            Zonky embedded PostgreSQL — the fallback when Docker is not running.
+
+            This does NOT weaken ADR "real PostgreSQL, never H2". Zonky starts a
+            genuine PostgreSQL server from an official binary distribution; the
+            only thing it removes is the container around it. Testcontainers is
+            still preferred and is what CI uses — see PostgresBackend, which
+            picks Testcontainers whenever a Docker daemon answers.
+
+            The reason it exists: without it, the entire integration suite is
+            unrunnable on a developer machine that has no Docker, and a suite
+            that cannot be run locally is a suite that gets run only in CI,
+            which is to say only after the mistake has been pushed.
+        -->
+        <dependency>
+            <groupId>io.zonky.test</groupId>
+            <artifactId>embedded-postgres</artifactId>
+            <version>${zonky.version}</version>
             <scope>test</scope>
         </dependency>
 

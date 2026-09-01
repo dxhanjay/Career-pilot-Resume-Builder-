@@ -1,0 +1,137 @@
+# =============================================================================
+# CareerPilot AI — Render blueprint
+#
+# Provisions the API and its PostgreSQL in one step. In the Render dashboard:
+# New → Blueprint → pick this repository. Render reads this file and creates
+# both services with the wiring below already in place.
+#
+# The client is deployed separately to Vercel; see frontend/vercel.json. The two
+# are joined by exactly two values, and they must agree:
+#
+#   here      APP_CORS_ALLOWED_ORIGINS  = the Vercel origin
+#   on Vercel VITE_API_BASE_URL         = this service's origin
+#
+# Getting one of them wrong produces a browser CORS error rather than a server
+# one, so check both before debugging anything else.
+# =============================================================================
+
+databases:
+  - name: careerpilot-db
+    databaseName: careerpilot
+    user: careerpilot
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: careerpilot-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Readiness, not liveness. Readiness reports DOWN while Flyway is still
+    # migrating, so Render holds traffic until the schema is actually ready
+    # rather than routing requests at a server that will 500 them.
+    healthCheckPath: /actuator/health/readiness
+
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # ---- Database -------------------------------------------------------
+      # Render exposes the connection as separate values rather than a JDBC
+      # URL; application.yml composes jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      # from these. Handing Spring the libpq-style DATABASE_URL instead produces
+      # "Driver claims to not accept jdbcUrl", which reads like a driver fault
+      # and is a URL-format fault.
+      - key: DB_HOST
+        fromDatabase:
+          name: careerpilot-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: careerpilot-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: careerpilot-db
+          property: database
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: careerpilot-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: careerpilot-db
+          property: password
+
+      # Render's free PostgreSQL allows few connections, and one JVM must not
+      # claim them all — migrations, a psql session, and the second instance
+      # that exists briefly during a deploy all need one.
+      - key: DB_POOL_MAX_SIZE
+        value: "5"
+      - key: DB_POOL_MIN_IDLE
+        value: "1"
+
+      # ---- Authentication -------------------------------------------------
+      # Generated once by Render and never seen by this repository. Rotating it
+      # invalidates every access token immediately; users simply sign in again,
+      # so rotation is cheap if you ever suspect exposure.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TOKEN_TTL
+        value: 15m
+      - key: JWT_REFRESH_TOKEN_TTL
+        value: 7d
+
+      # Off because no SMTP provider is configured. With it on, every new
+      # account would be stuck at PENDING waiting for an email that is never
+      # sent. Turn it back on in the same change that sets MAIL_HOST.
+      - key: AUTH_REQUIRE_EMAIL_VERIFICATION
+        value: "false"
+      - key: AUTH_MAX_FAILED_LOGIN_ATTEMPTS
+        value: "5"
+      - key: AUTH_LOCKOUT_DURATION
+        value: 15m
+
+      # ---- Client ---------------------------------------------------------
+      # The Vercel origin, with no trailing slash. Never a wildcard: '*'
+      # combined with credentials voids every other control on the list, and
+      # browsers refuse the combination anyway. Change both together if the
+      # client moves to a custom domain.
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://careerpilot-seven-tau.vercel.app
+      - key: APP_FRONTEND_BASE_URL
+        value: https://careerpilot-seven-tau.vercel.app
+
+      # ---- File storage ---------------------------------------------------
+      # 'local' works and is a real compromise: Render's free plan has no
+      # persistent disk, so uploaded resumes are lost on every redeploy and
+      # restart. The application says so loudly in the startup log rather than
+      # degrading quietly.
+      #
+      # For durable uploads set this to 'cloudinary' and add the three
+      # credentials below. Cloudinary's free tier needs no card.
+      - key: APP_STORAGE_PROVIDER
+        value: local
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # ---- Background jobs -------------------------------------------------
+      # Sized for a single small instance. Parsing is CPU-bound over a document
+      # already in the database, so a deep queue buys nothing that a second
+      # worker thread does not.
+      - key: APP_ASYNC_CORE_POOL_SIZE
+        value: "2"
+      - key: APP_ASYNC_MAX_POOL_SIZE
+        value: "4"
+      - key: APP_JOBS_POLL_INTERVAL_MS
+        value: "5000"
+      - key: APP_JOBS_BATCH_SIZE
+        value: "3"

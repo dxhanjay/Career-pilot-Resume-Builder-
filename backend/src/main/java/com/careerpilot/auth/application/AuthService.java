@@ -216,7 +216,17 @@ public class AuthService {
      * @return the new token pair, with the user embedded
      * @throws ApiException if the refresh token is unknown, revoked, or expired
      */
-    @Transactional
+    /*
+     * noRollbackFor mirrors TokenService.rotate, and has to be here as well as
+     * there.
+     *
+     * This method is the outer transaction boundary: rotate() joins it rather
+     * than starting its own, so it is THIS annotation's rollback rules that
+     * decide what happens when an ApiException propagates. Marking only the
+     * inner method looks correct, changes nothing, and leaves reuse detection
+     * silently revoking a family that is rolled back moments later.
+     */
+    @Transactional(noRollbackFor = ApiException.class)
     public TokenResponse refresh(String refreshToken, String userAgent, String ipAddress) {
         TokenService.RotationResult rotation = tokenService.rotate(refreshToken, userAgent, ipAddress);
 

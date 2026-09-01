@@ -20,10 +20,16 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
   datasource:
-    # NOTE: this must be a JDBC URL (jdbc:postgresql://...), not the libpq URL
-    # that Railway's DATABASE_URL provides. See .env.example for how to build it
-    # from Railway's PG* reference variables.
-    url: ${SPRING_DATASOURCE_URL}
+    # Must be a JDBC URL (jdbc:postgresql://...), never the libpq URL that
+    # managed Postgres add-ons expose as DATABASE_URL. Handing that to Spring
+    # produces "Driver claims to not accept jdbcUrl", which reads like a driver
+    # problem and is a URL-format problem.
+    #
+    # Composed from parts when SPRING_DATASOURCE_URL is not given, because
+    # that is what platforms actually hand you: Render exposes host, port and
+    # database as separate values, and building the URL here avoids a shell
+    # wrapper whose only job is string concatenation.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver

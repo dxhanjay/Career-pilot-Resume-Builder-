@@ -5,6 +5,7 @@ import com.careerpilot.resume.domain.StorageProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class LocalFileStorage implements FileStorage {
 
     private final Path rootDirectory;
 
-    public LocalFileStorage(StorageProperties storageProperties) {
+    public LocalFileStorage(StorageProperties storageProperties, Environment environment) {
         String configured = storageProperties.localDirectory();
         this.rootDirectory = Paths.get(
                 configured == null || configured.isBlank()
@@ -52,9 +53,26 @@ public class LocalFileStorage implements FileStorage {
 
         try {
             Files.createDirectories(rootDirectory);
-            log.info("Local file storage active at {} (development only)", rootDirectory);
         } catch (IOException e) {
             throw new IllegalStateException("Could not create local storage directory", e);
+        }
+
+        // Loud, once, at startup — never a silent degradation.
+        //
+        // On a container platform the filesystem is ephemeral: every redeploy,
+        // restart, or scale-down deletes every uploaded resume, and with more
+        // than one instance a file written by one is invisible to the others.
+        // The symptom is a resume that uploaded fine yesterday and 404s today,
+        // which is exactly the kind of thing nobody thinks to check for.
+        if (environment.matchesProfiles("prod")) {
+            log.warn("Local file storage is active in the PROD profile, at {}. Container "
+                    + "filesystems are ephemeral: uploaded resumes will be LOST on the next "
+                    + "redeploy or restart, and will not be visible to a second instance. "
+                    + "Survivable for a demo, not suitable for real use. To fix, set "
+                    + "APP_STORAGE_PROVIDER=cloudinary together with CLOUDINARY_CLOUD_NAME, "
+                    + "CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.", rootDirectory);
+        } else {
+            log.info("Local file storage active at {}", rootDirectory);
         }
     }
 

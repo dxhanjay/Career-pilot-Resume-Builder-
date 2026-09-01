@@ -11,6 +11,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -19,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HexFormat;
@@ -68,9 +70,34 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
     private final SecretKey signingKey;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final Clock clock;
 
+    /**
+     * @implNote Explicitly {@code @Autowired} because this class has two
+     *     constructors. Spring only infers the injection point when there is
+     *     exactly one, and otherwise fails at startup with "No default
+     *     constructor found" — an error that names neither constructor.
+     */
+    @Autowired
     public JwtTokenProvider(JwtProperties jwtProperties) {
+        this(jwtProperties, Clock.systemUTC());
+    }
+
+    /**
+     * Package-private, for tests that need to issue a token as of a different
+     * moment.
+     *
+     * <p>The alternative — constructing a provider with a negative token
+     * lifetime to force an expired token — stopped working once
+     * {@link JwtProperties} began rejecting non-positive durations, and was
+     * always a strange thing to do: it tested the behaviour of a configuration
+     * that must never exist rather than the behaviour of an expired token.
+     *
+     * @param clock the source of "now" for issuing tokens
+     */
+    JwtTokenProvider(JwtProperties jwtProperties, Clock clock) {
         this.jwtProperties = jwtProperties;
+        this.clock = clock;
         this.signingKey = Keys.hmacShaKeyFor(
                 jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
     }
@@ -86,7 +113,7 @@ public class JwtTokenProvider {
      * @return a compact, signed JWT
      */
     public String createAccessToken(User user) {
-        Instant now = Instant.now();
+        Instant now = clock.instant();
         Instant expiry = now.plus(jwtProperties.accessTokenTtl());
 
         Set<String> roleNames = user.getRoles().stream()

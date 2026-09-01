@@ -114,7 +114,28 @@ public class TokenService {
      * @return the owning user and the new raw token
      * @throws ApiException if the token is unknown, revoked, or expired
      */
-    @Transactional
+    /**
+     * Exchanges a refresh token for a new pair, rotating the old one out.
+     *
+     * <p><strong>{@code noRollbackFor} is load-bearing, not a style choice.</strong>
+     * Two paths here revoke tokens and then throw: reuse detection revokes the
+     * whole family, and an account that may no longer authenticate has all of
+     * its sessions revoked. Under the default rollback-on-RuntimeException rule
+     * the throw undoes the revocation it was reporting — the log line says the
+     * family was terminated, the response says the session was ended, and the
+     * database still holds a live token. An attacker replaying a stolen token
+     * would be told off and left with a working credential.
+     *
+     * <p>Inside this method an {@link ApiException} is a decision rather than a
+     * failure, and the writes made before it are part of that decision. Every
+     * other throw site here performs no writes at all, so nothing is committed
+     * that should not be.
+     *
+     * @param rawToken the token as presented by the client
+     * @return the user and their new refresh token
+     * @throws ApiException with {@code TOKEN_REUSE_DETECTED} if the token was already consumed
+     */
+    @Transactional(noRollbackFor = ApiException.class)
     public RotationResult rotate(String rawToken, String userAgent, String ipAddress) {
         String tokenHash = jwtTokenProvider.hashRefreshToken(rawToken);
 

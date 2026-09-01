@@ -1,7 +1,6 @@
 package com.careerpilot.config.properties;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -39,13 +38,40 @@ public record JwtProperties(
                 Generate one with: openssl rand -base64 48""")
         String secret,
 
-        @Positive
         Duration accessTokenTtl,
 
-        @Positive
         Duration refreshTokenTtl,
 
         @NotBlank
         String issuer
 ) {
+
+    /**
+     * Validates the two durations by hand.
+     *
+     * <p>They previously carried {@code @Positive}, which has no validator for
+     * {@link Duration}. Hibernate Validator does not treat that as a no-op — it
+     * throws {@code UnexpectedTypeException: No validator could be found for
+     * constraint 'Positive' validating type 'java.time.Duration'} while binding,
+     * and the application context fails to build. The annotation looked like a
+     * constraint and was in fact a startup failure waiting for the first real
+     * boot.
+     *
+     * <p>A compact constructor is the right tool anyway: the check is trivial,
+     * it runs at binding time exactly as a constraint would, and the message can
+     * name the offending property rather than reading "must be positive".
+     */
+    public JwtProperties {
+        requirePositive(accessTokenTtl, "app.jwt.access-token-ttl");
+        requirePositive(refreshTokenTtl, "app.jwt.refresh-token-ttl");
+    }
+
+    private static void requirePositive(Duration value, String property) {
+        if (value == null || value.isZero() || value.isNegative()) {
+            throw new IllegalArgumentException(
+                    property + " must be a positive duration, for example 15m or 7d. "
+                            + "A zero or negative token lifetime means every token is already "
+                            + "expired, which presents as \"login works but nothing else does\".");
+        }
+    }
 }

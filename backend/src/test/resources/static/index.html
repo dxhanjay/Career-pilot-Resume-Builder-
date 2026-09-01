@@ -1,0 +1,16 @@
+<!doctype html>
+<!--
+  A stand-in for the built React shell.
+
+  SpaConfig only does anything when classpath:/static/index.html exists, and in
+  a normal Maven build it does not - the real one is produced by the Docker
+  build, which compiles the client into that directory. Without this stub the
+  routing rules would be untestable and would first be exercised in production.
+
+  Deliberately minimal, and deliberately carrying a marker string so a test can
+  tell "the SPA shell was served" from "something else returned HTML".
+-->
+<html lang="en">
+  <head><title>CareerPilot AI</title></head>
+  <body><div id="root" data-spa-shell="true"></div></body>
+</html>

@@ -8,7 +8,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,12 +95,17 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("rejects an expired token")
         void rejectsExpired() {
-            JwtTokenProvider expiring = new JwtTokenProvider(new JwtProperties(
-                    SECRET, Duration.ofSeconds(-60), Duration.ofDays(7), "careerpilot-ai"));
+            // Issue the token as of an hour ago, against a normal 15-minute TTL,
+            // so what is being tested is an expired token rather than a
+            // configuration that must never exist.
+            JwtTokenProvider inThePast = new JwtTokenProvider(
+                    new JwtProperties(SECRET, Duration.ofMinutes(15), Duration.ofDays(7),
+                            "careerpilot-ai"),
+                    Clock.fixed(Instant.now().minus(Duration.ofHours(1)), ZoneOffset.UTC));
 
             User user = TestDataFactory.activeUser("aditi@example.com");
 
-            assertThat(provider.parseAccessToken(expiring.createAccessToken(user))).isNull();
+            assertThat(provider.parseAccessToken(inThePast.createAccessToken(user))).isNull();
         }
 
         @Test
@@ -156,7 +164,7 @@ class JwtTokenProviderTest {
         @Test
         @DisplayName("hash to the column width the schema declares")
         void hashFitsTheColumn() {
-            // refresh_tokens.token_hash is CHAR(64). A mismatch here would fail
+            // refresh_tokens.token_hash is VARCHAR(64). A mismatch here would fail
             // at insert time in production rather than in this test.
             assertThat(provider.hashRefreshToken("anything")).hasSize(64);
         }

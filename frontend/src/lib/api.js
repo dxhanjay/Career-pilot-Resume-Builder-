@@ -3,10 +3,21 @@ import axios from 'axios'
 /**
  * The HTTP layer.
  *
- * Relative base URL by design — the API and this bundle are served from one
- * origin in production, and the Vite dev server proxies the same paths locally.
- * There is no VITE_API_URL to get wrong.
+ * Relative by default. When the client and the API are served from one origin —
+ * the single-image Docker build, and the Vite dev server, which proxies these
+ * same paths — there is no base URL to configure and therefore none to get
+ * wrong, and no CORS preflight on any request.
+ *
+ * `VITE_API_BASE_URL` exists for the split deployment, where the client is on a
+ * static host (Vercel) and the API is elsewhere (Render). Set it to the API's
+ * origin with no trailing slash, e.g. `https://careerpilot-api.onrender.com`.
+ * The backend must then list the client's origin in APP_CORS_ALLOWED_ORIGINS.
+ *
+ * Read at build time, not runtime: Vite inlines it into the bundle, so changing
+ * it requires a rebuild rather than a restart.
  */
+const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
+
 const ACCESS_TOKEN_KEY = 'cp.accessToken'
 const REFRESH_TOKEN_KEY = 'cp.refreshToken'
 
@@ -54,7 +65,7 @@ function safeRemove(key) {
 }
 
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${API_ORIGIN}/api/v1`,
   timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -110,8 +121,10 @@ api.interceptors.response.use(
 
     try {
       if (!refreshInFlight) {
+        // A bare axios instance, not `api`: routing the refresh through the
+        // same instance would re-enter this interceptor on failure and loop.
         refreshInFlight = axios
-          .post('/api/v1/auth/refresh', { refreshToken })
+          .post(`${API_ORIGIN}/api/v1/auth/refresh`, { refreshToken })
           .then((response) => response.data?.data)
           .finally(() => {
             refreshInFlight = null
