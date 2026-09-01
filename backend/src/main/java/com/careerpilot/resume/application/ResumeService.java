@@ -407,4 +407,12 @@ public class ResumeService {
             throw new IllegalStateException("SHA-256 unavailable on this JVM", e);
         }
     }
+
+    /**
+     * @return how many resumes this user has, excluding soft-deleted ones
+     */
+    @Transactional(readOnly = true)
+    public long count(UUID userId) {
+        return resumeRepository.countByUserId(userId);
+    }
 }

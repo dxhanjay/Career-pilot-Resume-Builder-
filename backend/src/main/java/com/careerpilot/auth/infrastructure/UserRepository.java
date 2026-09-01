@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,4 +61,30 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      */
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.deletedAt IS NULL")
     Optional<User> findActiveById(@Param("id") UUID id);
+
+    /**
+     * Admin user search (FR-ADM-01).
+     *
+     * <p>A blank term returns everyone, so the same query backs both the
+     * unfiltered list and the search box and the two cannot drift apart.
+     *
+     * @param term matched against email and full name, case-insensitively
+     */
+    @Query("""
+            SELECT u FROM User u
+             WHERE u.deletedAt IS NULL
+               AND (:term = ''
+                    OR LOWER(u.email) LIKE LOWER(CONCAT('%', :term, '%'))
+                    OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :term, '%')))
+            """)
+    Page<User> search(@Param("term") String term, Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.deletedAt IS NULL")
+    long countActive();
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.deletedAt IS NULL AND u.status = :status")
+    long countByStatus(@Param("status") com.careerpilot.auth.domain.UserStatus status);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :since AND u.deletedAt IS NULL")
+    long countCreatedSince(@Param("since") java.time.Instant since);
 }

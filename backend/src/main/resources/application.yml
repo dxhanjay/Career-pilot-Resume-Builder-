@@ -226,6 +226,13 @@ app:
   mail:
     from: ${MAIL_FROM:no-reply@careerpilot.ai}
 
+  admin:
+    # Comma-separated emails granted ROLE_ADMIN at startup. See AdminProperties
+    # for why the first administrator comes from configuration rather than from
+    # a seeded account or a first-to-register rule. Additive only: removing an
+    # address here does not demote anyone.
+    bootstrap-emails: ${APP_ADMIN_BOOTSTRAP_EMAILS:}
+
   storage:
     # 'local' or 'cloudinary'. Local writes to disk and is development-only:
     # Railway filesystems are ephemeral, so every redeploy would silently delete

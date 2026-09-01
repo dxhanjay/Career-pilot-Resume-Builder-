@@ -243,6 +243,34 @@ public class User extends AuditableEntity {
     }
 
     /**
+     * Suspends the account. An administrator action, not a user one.
+     *
+     * <p>Deliberately does nothing to a deleted account: undeleting by way of
+     * suspend-then-reactivate would be a silent restore path around the deletion
+     * policy.
+     */
+    public void suspend() {
+        if (status != UserStatus.DELETED) {
+            this.status = UserStatus.SUSPENDED;
+        }
+    }
+
+    /**
+     * Lifts a suspension.
+     *
+     * <p>Returns the account to PENDING rather than ACTIVE when the email was
+     * never verified, so reinstating someone cannot quietly hand them a
+     * verification they never completed.
+     */
+    public void reactivate() {
+        if (status == UserStatus.SUSPENDED) {
+            this.status = isEmailVerified() ? UserStatus.ACTIVE : UserStatus.PENDING;
+            this.failedLoginAttempts = 0;
+            this.lockedUntil = null;
+        }
+    }
+
+    /**
      * @return whether this account may attempt authentication at all
      */
     public boolean canAuthenticate() {

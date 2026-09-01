@@ -1,6 +1,7 @@
 package com.careerpilot.jobs.infrastructure;
 
 import com.careerpilot.jobs.domain.Job;
+import com.careerpilot.jobs.domain.JobStatus;
 import com.careerpilot.jobs.domain.JobType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -138,4 +139,12 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
     @Modifying
     @Query("DELETE FROM Job j WHERE j.finishedAt IS NOT NULL AND j.finishedAt < :cutoff")
     int deleteTerminalBefore(@Param("cutoff") Instant cutoff);
+
+    /**
+     * How many jobs are in one state, across every user.
+     *
+     * <p>Operational, not per-user: a queue depth that only an administrator can
+     * see is the point of the metric.
+     */
+    long countByStatus(JobStatus status);
 }
