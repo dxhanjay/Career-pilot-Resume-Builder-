@@ -195,6 +195,109 @@ export const SKILLS_BY_CANONICAL: ReadonlyMap<string, SkillEntry> = new Map(
 )
 
 /**
+ * How a skill is written when we have to write it ourselves.
+ *
+ * Canonical names are lowercase because that is what matching joins on. Showing
+ * them raw produces "This role asks for sql" and "Gap: kubernetes", which reads
+ * as sloppy and undermines a report whose whole claim is precision. Only the
+ * irregular ones are listed; the rest capitalise correctly.
+ */
+const SKILL_LABELS: Record<string, string> = {
+  sql: 'SQL', 'sql server': 'SQL Server', 'pl/sql': 'PL/SQL',
+  html: 'HTML', css: 'CSS', php: 'PHP', 'c++': 'C++', 'c#': 'C#', c: 'C', r: 'R',
+  javascript: 'JavaScript', typescript: 'TypeScript', 'node.js': 'Node.js',
+  'next.js': 'Next.js', 'react native': 'React Native', '.net': '.NET',
+  postgresql: 'PostgreSQL', mysql: 'MySQL', mongodb: 'MongoDB', sqlite: 'SQLite',
+  dynamodb: 'DynamoDB', neo4j: 'Neo4j', elasticsearch: 'Elasticsearch',
+  aws: 'AWS', gcp: 'GCP', 'ci/cd': 'CI/CD', nginx: 'NGINX', rabbitmq: 'RabbitMQ',
+  s3: 'S3', 'github actions': 'GitHub Actions', 'gitlab ci': 'GitLab CI',
+  'rest api': 'REST API', graphql: 'GraphQL', tdd: 'TDD', oop: 'OOP', nlp: 'NLP',
+  ml: 'ML', 'power bi': 'Power BI', jquery: 'jQuery', 'scikit-learn': 'scikit-learn',
+  numpy: 'NumPy', opencv: 'OpenCV', pytorch: 'PyTorch', tensorflow: 'TensorFlow',
+  matlab: 'MATLAB', junit: 'JUnit', jira: 'Jira', k8s: 'Kubernetes',
+  'spring boot': 'Spring Boot', 'data structures': 'Data Structures',
+  'machine learning': 'Machine Learning', 'deep learning': 'Deep Learning',
+  'computer vision': 'Computer Vision', 'system design': 'System Design',
+  'web sockets': 'WebSockets', 'problem solving': 'Problem Solving',
+  'public speaking': 'Public Speaking', 'data analysis': 'Data Analysis',
+}
+
+export function skillLabel(canonical: string): string {
+  const known = SKILL_LABELS[canonical]
+  if (known) return known
+  return canonical
+    .split(' ')
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .join(' ')
+}
+
+/**
+ * Skills that a skill necessarily demonstrates.
+ *
+ * Without this, a resume listing PostgreSQL is told it is missing SQL — which
+ * is false, insulting, and the fastest way to lose a user's trust in every
+ * other gap on the list. A gap has to be real to be worth acting on.
+ *
+ * Deliberately one-directional and conservative. PostgreSQL implies SQL; SQL
+ * implies nothing about PostgreSQL. Only relations that are true by definition
+ * are listed — nothing that merely tends to co-occur.
+ */
+const IMPLIES: Record<string, readonly string[]> = {
+  postgresql: ['sql'],
+  mysql: ['sql'],
+  sqlite: ['sql'],
+  oracle: ['sql'],
+  'sql server': ['sql'],
+  'spring boot': ['spring', 'java'],
+  spring: ['java'],
+  hibernate: ['sql', 'java'],
+  typescript: ['javascript'],
+  'next.js': ['react', 'javascript'],
+  'react native': ['react', 'javascript'],
+  react: ['javascript'],
+  angular: ['javascript'],
+  vue: ['javascript'],
+  express: ['javascript', 'node.js'],
+  'node.js': ['javascript'],
+  django: ['python'],
+  flask: ['python'],
+  fastapi: ['python'],
+  pandas: ['python'],
+  numpy: ['python'],
+  pytorch: ['python', 'machine learning'],
+  tensorflow: ['python', 'machine learning'],
+  'scikit-learn': ['python', 'machine learning'],
+  'deep learning': ['machine learning'],
+  rails: ['ruby'],
+  laravel: ['php'],
+  kubernetes: ['docker'],
+  'github actions': ['ci/cd'],
+  'gitlab ci': ['ci/cd'],
+  jenkins: ['ci/cd'],
+  lambda: ['aws'],
+  s3: ['aws'],
+  dynamodb: ['aws'],
+}
+
+/** Everything a set of held skills demonstrates, the skills themselves included. */
+export function expandSkills(held: Iterable<string>): Set<string> {
+  const expanded = new Set<string>()
+  for (const skill of held) {
+    expanded.add(skill)
+    for (const implied of IMPLIES[skill] ?? []) expanded.add(implied)
+  }
+  return expanded
+}
+
+/** Which held skill demonstrates `wanted`, or null. */
+export function impliedBy(wanted: string, held: Iterable<string>): string | null {
+  for (const skill of held) {
+    if ((IMPLIES[skill] ?? []).includes(wanted)) return skill
+  }
+  return null
+}
+
+/**
  * Finds every skill mentioned in a line.
  *
  * Matching is whole-token; see indexOfToken for why that matters.

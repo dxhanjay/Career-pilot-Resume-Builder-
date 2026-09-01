@@ -572,7 +572,7 @@ function evaluateContent(
     const example = weak[0]
     findings.push(problem(
       'PASSIVE_PHRASING', 'CONTENT', 'MEDIUM',
-      `${weak.length} bullet${weak.length === 1 ? '' : 's'} describe duties rather than results`,
+      `${weak.length} bullet${weak.length === 1 ? '' : 's'} ${weak.length === 1 ? 'describes' : 'describe'} duties rather than results`,
       `Phrases like "${weakOpener(example.text)}" describe the job that existed, not what you did with it. They are copied from the job description you were given.`,
       'Replace the opener with the verb for what you actually produced, and add the outcome.',
       lost, stripBullet(example.text), example.index, example.index,

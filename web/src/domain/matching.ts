@@ -1,5 +1,5 @@
 import { type ResumeSnapshot, snapshotLine } from './snapshot'
-import { type SkillCategory, findSkillsIn } from './skills'
+import { type SkillCategory, findSkillsIn, impliedBy, skillLabel } from './skills'
 import { indexOfToken, isBullet, stripBullet, toLineModel, wordCount } from './text'
 
 /**
@@ -293,11 +293,19 @@ export function matchResume(snapshot: ResumeSnapshot, posting: JobPosting): Matc
     askedFor.add(wanted.normalizedName)
 
     const have = resumeSkills.get(wanted.normalizedName)
+
     // A skill can be present in the prose without reaching the skills block.
     // That is a real finding — the candidate has it and is not being credited —
     // so it counts as a match and produces a "surface this" suggestion.
     const prose = have ? null : findInText(snapshot, wanted.displayName)
-    const matched = Boolean(have) || prose !== null
+
+    // And a skill can be demonstrated by another one. A resume listing
+    // PostgreSQL is not missing SQL, and saying so costs the user's trust in
+    // every other gap on the list.
+    const implier = have || prose !== null ? null : impliedBy(wanted.normalizedName, resumeSkills.keys())
+    const impliedSkill = implier ? resumeSkills.get(implier) : undefined
+
+    const matched = Boolean(have) || prose !== null || Boolean(impliedSkill)
 
     if (wanted.required) {
       requiredTotal++
@@ -307,11 +315,11 @@ export function matchResume(snapshot: ResumeSnapshot, posting: JobPosting): Matc
       if (matched) optionalMet++
     }
 
-    const resumeLine = have ? have.lineStart : prose
+    const resumeLine = have ? have.lineStart : (prose ?? impliedSkill?.lineStart ?? null)
 
     comparisons.push({
       normalizedName: wanted.normalizedName,
-      displayName: have ? have.name : wanted.displayName,
+      displayName: have ? have.name : skillLabel(wanted.displayName),
       category: wanted.category,
       verdict: matched ? 'MATCHED' : 'MISSING',
       required: wanted.required,
@@ -464,9 +472,14 @@ function suggest(
 
   // 1. Skills the candidate demonstrably has that never reach the skills block.
   //    The cheapest possible win: no new claim, better placement.
+  const listedSkills = new Set(snapshot.skills.map((skill) => skill.normalizedName))
   comparisons
     .filter((c) => c.verdict === 'MATCHED' && c.resumeLine !== null)
     .filter((c) => !inSkillsSection(snapshot, c.resumeLine!))
+    // Never suggest moving something that is already in the skills list. The
+    // skill may have been *detected* on a bullet, but if the lexicon also found
+    // it in the skills block there is nothing to move.
+    .filter((c) => !(listedSkills.has(c.normalizedName) && inSkillsSectionAnywhere(snapshot, c.normalizedName)))
     .slice(0, 3)
     .forEach((c) => {
       suggestions.push({
@@ -563,6 +576,16 @@ function findInText(snapshot: ResumeSnapshot, skillName: string): number | null 
     if (indexOfToken(snapshot.lines[i].toLowerCase(), needle) >= 0) return i
   }
   return null
+}
+
+/** Whether the skills block itself mentions this skill, wherever it was recorded. */
+function inSkillsSectionAnywhere(snapshot: ResumeSnapshot, normalizedName: string): boolean {
+  const section = snapshot.sections.find((s) => s.type === 'SKILLS')
+  if (!section) return false
+  for (let i = Math.max(0, section.startLine); i <= Math.min(section.endLine, snapshot.lines.length - 1); i++) {
+    if (indexOfToken(snapshot.lines[i].toLowerCase(), normalizedName) >= 0) return true
+  }
+  return false
 }
 
 function inSkillsSection(snapshot: ResumeSnapshot, line: number): boolean {

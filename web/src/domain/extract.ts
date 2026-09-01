@@ -336,10 +336,20 @@ export function extractSkills(
 
     for (const hit of findSkillsIn(line.text, inSkillsSection)) {
       const canonical = hit.entry.canonical
-      // First mention wins: it is the most likely to be the deliberate listing,
-      // and re-reading the same skill from a later bullet would only downgrade
-      // its confidence.
-      if (found.has(canonical)) continue
+      const existing = found.get(canonical)
+
+      // A mention inside the skills block beats an earlier one in prose, even
+      // though the prose came first.
+      //
+      // Taking the first mention unconditionally records "Java" at the bullet
+      // that happens to name it, and everything downstream then believes Java
+      // is not in the skills section — which produced a match suggestion
+      // telling the candidate to move a skill they had already listed. The
+      // line pointer is not just provenance; it is what "is this listed?" is
+      // answered from.
+      if (existing && !(inSkillsSection && existing.confidence < CONFIDENCE_IN_SKILLS_SECTION)) {
+        continue
+      }
 
       let confidence: number
       if (inSkillsSection) {
@@ -390,9 +400,21 @@ export interface SectionEntry {
 /**
  * Splits a section's body into one entry per role or qualification.
  *
- * A new entry starts at a non-bullet line that carries a date, or after a blank
- * line followed by a non-bullet line. Bullets always belong to the entry above
- * them, which is what stops a role's achievements being read as separate jobs.
+ * A new entry starts at a non-bullet line that either follows a blank line, or
+ * carries a date when the current entry already has one. Bullets always belong
+ * to the entry above them, which is what stops a role's achievements being read
+ * as separate jobs.
+ *
+ * <p>The "already has one" condition is load-bearing. Treating every dated line
+ * as a new entry splits the extremely common
+ *
+ *     Software Engineering Intern, Acme Technologies
+ *     Jun 2024 - Aug 2024
+ *
+ * into two: a role with no dates, and a date range with no role. The resume was
+ * then told it had "1 experience entry with no readable dates" — about the one
+ * entry whose dates were sitting in the phantom entry underneath it — and its
+ * years of experience computed as zero.
  */
 export function splitEntries(
   model: LineModel,
@@ -404,6 +426,7 @@ export function splitEntries(
   if (start > end) return entries
 
   let currentStart = -1
+  let currentHasDate = false
   let sawBlank = false
 
   for (let i = start; i <= end; i++) {
@@ -416,13 +439,18 @@ export function splitEntries(
 
     const bullet = isBullet(text)
     const dated = parseDateRange(text) !== null
-    const startsNewEntry = !bullet && (dated || sawBlank || currentStart < 0)
+    const startsNewEntry =
+      !bullet && (currentStart < 0 || sawBlank || (dated && currentHasDate))
 
     if (startsNewEntry && currentStart >= 0) {
       entries.push({ startLine: currentStart, endLine: i - 1 })
       currentStart = i
+      currentHasDate = dated
     } else if (currentStart < 0) {
       currentStart = i
+      currentHasDate = dated
+    } else if (dated) {
+      currentHasDate = true
     }
 
     sawBlank = false
